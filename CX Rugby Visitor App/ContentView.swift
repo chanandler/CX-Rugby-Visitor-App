@@ -26,7 +26,6 @@ struct ContentView: View {
 
     @State private var firstName = ""
     @State private var lastName = ""
-    @State private var identityNumber = ""
     @State private var company = ""
     @State private var host = ""
     @State private var carRegistration = ""
@@ -196,13 +195,10 @@ struct ContentView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
 
-                        TextField("Identity number *", text: $identityNumber)
-                            .textFieldStyle(.roundedBorder)
-
                         TextField("Company *", text: $company)
                             .textFieldStyle(.roundedBorder)
 
-                        TextField("Host *", text: $host)
+                        TextField("Visiting *", text: $host)
                             .textFieldStyle(.roundedBorder)
 
                         TextField("Car registration (optional)", text: $carRegistration)
@@ -308,9 +304,6 @@ struct ContentView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(visitor.fullName)
                                     .font(.headline)
-                                Text("ID: \(visitor.identityNumber)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
                                 Text("Company: \(visitor.company) • Host: \(visitor.host)")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
@@ -596,13 +589,11 @@ struct ContentView: View {
     private func registerVisitor() {
         let cleanedFirstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedLastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanedIdentityNumber = identityNumber.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedCompany = company.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !cleanedFirstName.isEmpty,
               !cleanedLastName.isEmpty,
-              !cleanedIdentityNumber.isEmpty,
               !cleanedCompany.isEmpty,
               !cleanedHost.isEmpty else {
             registrationMessage = "Please complete all required fields marked with * before registering."
@@ -613,7 +604,6 @@ struct ContentView: View {
         let visitor = VisitorRecord(
             firstName: cleanedFirstName,
             lastName: cleanedLastName,
-            identityNumber: cleanedIdentityNumber,
             company: cleanedCompany,
             host: cleanedHost,
             carRegistration: carRegistration.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
@@ -624,7 +614,6 @@ struct ContentView: View {
 
         firstName = ""
         lastName = ""
-        identityNumber = ""
         company = ""
         host = ""
         carRegistration = ""
@@ -709,7 +698,6 @@ struct ContentView: View {
                     id: row.seed.id,
                     firstName: row.seed.firstName,
                     lastName: row.seed.lastName,
-                    identityNumber: row.seed.identityNumber,
                     company: row.seed.company,
                     host: row.seed.host,
                     carRegistration: row.seed.carRegistration,
@@ -951,7 +939,6 @@ private struct VisitorSeed {
     let id: UUID
     let firstName: String
     let lastName: String
-    let identityNumber: String
     let company: String
     let host: String
     let carRegistration: String
@@ -961,7 +948,7 @@ private struct VisitorSeed {
 
     var duplicateKey: String {
         let dayKey = VisitorCSVService.dayFormatter.string(from: checkInAt)
-        return "\(firstName.lowercased())|\(lastName.lowercased())|\(identityNumber.lowercased())|\(dayKey)"
+        return "\(firstName.lowercased())|\(lastName.lowercased())|\(company.lowercased())|\(dayKey)"
     }
 }
 
@@ -983,7 +970,6 @@ private enum VisitorCSVService {
             "id",
             "first_name",
             "last_name",
-            "identity_number",
             "company",
             "host",
             "car_registration",
@@ -997,7 +983,6 @@ private enum VisitorCSVService {
                 visitor.id.uuidString,
                 visitor.firstName,
                 visitor.lastName,
-                visitor.identityNumber,
                 visitor.company,
                 visitor.host,
                 visitor.carRegistration,
@@ -1036,7 +1021,7 @@ private enum VisitorCSVService {
 
         var seenDuplicateKeys = Set(existing.map { existing in
             let day = dayFormatter.string(from: existing.checkInAt)
-            return "\(existing.firstName.lowercased())|\(existing.lastName.lowercased())|\(existing.identityNumber.lowercased())|\(day)"
+            return "\(existing.firstName.lowercased())|\(existing.lastName.lowercased())|\(existing.company.lowercased())|\(day)"
         })
 
         for (index, row) in rows.dropFirst().enumerated() {
@@ -1090,11 +1075,6 @@ private enum VisitorCSVService {
             defaultValue: "Visitor"
         )
 
-        let idNumber = nonEmpty(
-            value(from: values, keys: ["identity_number", "id_number", "id", "document_number"]),
-            defaultValue: "UNKNOWN-\(rowNumber)"
-        )
-
         let company = nonEmpty(
             value(from: values, keys: ["company", "organisation", "organization"]),
             defaultValue: "Unknown Company"
@@ -1126,7 +1106,6 @@ private enum VisitorCSVService {
             id: id,
             firstName: firstName,
             lastName: lastName,
-            identityNumber: idNumber,
             company: company,
             host: host,
             carRegistration: carReg,
