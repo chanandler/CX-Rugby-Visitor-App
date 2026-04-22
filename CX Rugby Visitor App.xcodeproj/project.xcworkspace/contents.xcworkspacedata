@@ -4,4 +4,10 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:BUG_TRACKING.md">
+   </FileRef>
+   <FileRef
+      location = "group:FEATURE_AND_IDEAS_TRACKING.md">
+   </FileRef>
 </Workspace>
