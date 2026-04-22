@@ -1549,7 +1549,7 @@ private enum VisitorCSVService {
         return ""
     }
 
-    private static func normalizeHeader(_ header: String) -> String {
+    nonisolated private static func normalizeHeader(_ header: String) -> String {
         header
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
