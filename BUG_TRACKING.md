@@ -10,36 +10,6 @@ Track confirmed issues here.
 
 ## Bugs
 
-### BUG-007 (Priority: P2)
-- Status: Open
-- Title: Headerless CSV with 9+ columns can be mis-mapped because parser assumes first column is `id`
-- Area: Import/Restore
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift`
-- Steps to Reproduce:
-1. Import a headerless CSV with 9 columns where column 1 is not a UUID `id`.
-2. Preview/import the file.
-- Expected Result: Columns map correctly to first/last/company/host/check-in fields.
-- Actual Result: Positional header guesser prefers `id` at column 1 for 9+ columns, which can shift field mapping and corrupt imported values.
-- Notes: Improve header inference (UUID detection in col 1) or provide explicit column-mapping confirmation when header is missing.
-
-### BUG-008 (Priority: P2)
-- Status: Open
-- Title: PIN security controls are weak (plain storage, default PIN, no retry lockout)
-- Area: Security
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift`
-- Steps to Reproduce:
-1. Install app and inspect behavior with default settings.
-2. Attempt repeated incorrect PIN entry.
-- Expected Result: No insecure default, no plain-text credential storage, and brute-force mitigation.
-- Actual Result: PIN defaults to `1234`, is stored in `@AppStorage` (UserDefaults), and allows unlimited retries.
-- Notes: Move PIN to Keychain, require forced PIN setup at first launch, and add lockout/backoff for repeated failures.
-
 ### BUG-001 (Priority: P1)
 - Status: ✅ Resolved
 - Title: SwiftData schema changes have no migration plan and risk upgrade failure/data loss
@@ -136,3 +106,35 @@ Track confirmed issues here.
 - Actual Result (Before Fix): New formatter instances were created for each parse attempt.
 - Resolution: Added static cached `fallbackDateFormatters` and reused them in `parseDateString(_:)`.
 - Verified: Project builds successfully with cached formatter parsing.
+
+### BUG-007 (Priority: P2)
+- Status: ✅ Resolved
+- Title: Headerless CSV with 9+ columns can be mis-mapped because parser assumes first column is `id`
+- Area: Import/Restore
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Import a headerless CSV with 9 columns where column 1 is not a UUID `id`.
+2. Preview/import the file.
+- Expected Result: Columns map correctly to first/last/company/host/check-in fields.
+- Actual Result (Before Fix): Positional header guesser preferred `id` at column 1 for 9+ columns and could shift mapping.
+- Resolution: Added `likelyContainsIDColumn(_:)` detection for headerless imports and updated guessed-header logic to only include `id` when first-column UUID probability is high.
+- Verified: Project builds successfully with updated headerless mapping logic.
+
+### BUG-008 (Priority: P2)
+- Status: ✅ Resolved
+- Title: PIN security controls are weak (plain storage, default PIN, no retry lockout)
+- Area: Security
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`, `CX Rugby Visitor App/PinSecurityService.swift`
+- Steps to Reproduce:
+1. Install app and inspect behavior with default settings.
+2. Attempt repeated incorrect PIN entry.
+- Expected Result: No insecure default, no plain-text credential storage, and brute-force mitigation.
+- Actual Result (Before Fix): PIN defaulted to `1234`, was stored in `@AppStorage` (UserDefaults), and allowed unlimited retries.
+- Resolution: Replaced `@AppStorage` PIN storage with Keychain-backed `PinSecurityService`, removed default PIN, added mandatory PIN setup flow when missing, and implemented escalating retry lockout/backoff.
+- Verified: Project builds successfully with hardened PIN flow.

@@ -10,16 +10,22 @@ struct ContentView: View {
     @AppStorage("autoCheckoutEnabled") private var autoCheckoutEnabled = true
     @AppStorage("autoBackupEnabled") private var autoBackupEnabled = true
     @AppStorage("backupRetentionDays") private var backupRetentionDays = 30
-    @AppStorage("securityPin") private var securityPin = "1234"
+    @AppStorage("pinFailureCount") private var pinFailureCount = 0
+    @AppStorage("pinLockoutUntilEpoch") private var pinLockoutUntilEpoch = 0.0
 
     @State private var selectedTab: AppTab = .register
     @State private var pendingProtectedArea: ProtectedArea?
     @State private var unlockedProtectedAreas: Set<ProtectedArea> = []
+    @State private var storedPin: String? = PinSecurityService.loadPIN()
     @State private var pinInput = ""
     @State private var pinErrorMessage = ""
     @State private var showPinEntrySheet = false
+    @State private var showPinSetupSheet = false
     @State private var showSettingsSheet = false
     @State private var newPinInput = ""
+    @State private var setupPinInput = ""
+    @State private var confirmSetupPinInput = ""
+    @State private var pinSetupErrorMessage = ""
     @State private var lastUserActivityAt = Date()
     @State private var backgroundEnteredAt: Date?
 
@@ -83,6 +89,9 @@ struct ContentView: View {
         .onAppear {
             markUserActivity()
             runMaintenance()
+            if storedPin == nil {
+                showPinSetupSheet = true
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
@@ -129,6 +138,7 @@ struct ContentView: View {
                 tabTitle: pendingProtectedArea?.title ?? "Protected Area",
                 pinInput: $pinInput,
                 errorMessage: pinErrorMessage,
+                isUnlockDisabled: lockoutRemainingSeconds != nil,
                 onCancel: {
                     pendingProtectedArea = nil
                     pinInput = ""
@@ -136,6 +146,21 @@ struct ContentView: View {
                     showPinEntrySheet = false
                 },
                 onUnlock: verifyPinAndUnlock
+            )
+        }
+        .sheet(isPresented: $showPinSetupSheet) {
+            PinSetupSheet(
+                pinInput: $setupPinInput,
+                confirmPinInput: $confirmSetupPinInput,
+                errorMessage: pinSetupErrorMessage,
+                canCancel: storedPin != nil,
+                onCancel: {
+                    setupPinInput = ""
+                    confirmSetupPinInput = ""
+                    pinSetupErrorMessage = ""
+                    showPinSetupSheet = false
+                },
+                onSave: configurePinFromSetup
             )
         }
         .sheet(isPresented: $showSettingsSheet) {
@@ -561,6 +586,10 @@ struct ContentView: View {
         guard let protectedArea = newValue.protectedArea else {
             return
         }
+        guard ensurePinConfigured() else {
+            selectedTab = oldValue
+            return
+        }
         guard !unlockedProtectedAreas.contains(protectedArea) else {
             return
         }
@@ -574,13 +603,24 @@ struct ContentView: View {
 
     private func verifyPinAndUnlock() {
         guard let pendingProtectedArea else { return }
+        guard let storedPin else {
+            showPinEntrySheet = false
+            showPinSetupSheet = true
+            return
+        }
 
-        if pinInput == securityPin {
+        if let remaining = lockoutRemainingSeconds {
+            pinErrorMessage = "Too many attempts. Try again in \(remaining) seconds."
+            return
+        }
+
+        if pinInput == storedPin {
             unlockedProtectedAreas.insert(pendingProtectedArea)
             self.pendingProtectedArea = nil
             pinInput = ""
             pinErrorMessage = ""
             showPinEntrySheet = false
+            resetPinFailureState()
             switch pendingProtectedArea {
             case .signInBook:
                 selectedTab = .signInBook
@@ -591,7 +631,7 @@ struct ContentView: View {
             }
             markUserActivity()
         } else {
-            pinErrorMessage = "Incorrect PIN. Please try again."
+            registerFailedPinAttempt()
         }
     }
 
@@ -609,6 +649,7 @@ struct ContentView: View {
 
     private func openSettings() {
         markUserActivity()
+        guard ensurePinConfigured() else { return }
         if unlockedProtectedAreas.contains(.settings) {
             showSettingsSheet = true
             return
@@ -627,10 +668,85 @@ struct ContentView: View {
             return
         }
 
-        securityPin = digitsOnly
-        newPinInput = ""
-        settingsMessage = "PIN updated successfully."
-        showSettingsAlert = true
+        do {
+            try PinSecurityService.savePIN(digitsOnly)
+            storedPin = digitsOnly
+            resetPinFailureState()
+            newPinInput = ""
+            settingsMessage = "PIN updated successfully."
+            showSettingsAlert = true
+        } catch {
+            settingsMessage = "Could not update PIN: \(error.localizedDescription)"
+            showSettingsAlert = true
+        }
+    }
+
+    private var lockoutRemainingSeconds: Int? {
+        let remaining = Int(ceil(pinLockoutUntilEpoch - Date().timeIntervalSince1970))
+        return remaining > 0 ? remaining : nil
+    }
+
+    private func ensurePinConfigured() -> Bool {
+        if storedPin == nil {
+            showPinSetupSheet = true
+            return false
+        }
+        return true
+    }
+
+    private func configurePinFromSetup() {
+        let pin = setupPinInput.filter { $0.isNumber }
+        let confirm = confirmSetupPinInput.filter { $0.isNumber }
+
+        guard (4...8).contains(pin.count) else {
+            pinSetupErrorMessage = "PIN must be 4 to 8 digits."
+            return
+        }
+        guard pin == confirm else {
+            pinSetupErrorMessage = "PIN values do not match."
+            return
+        }
+
+        do {
+            try PinSecurityService.savePIN(pin)
+            storedPin = pin
+            resetPinFailureState()
+            setupPinInput = ""
+            confirmSetupPinInput = ""
+            pinSetupErrorMessage = ""
+            showPinSetupSheet = false
+            settingsMessage = "PIN configured successfully."
+            showSettingsAlert = true
+        } catch {
+            pinSetupErrorMessage = "Could not save PIN: \(error.localizedDescription)"
+        }
+    }
+
+    private func registerFailedPinAttempt() {
+        pinFailureCount += 1
+
+        let lockoutDuration: TimeInterval?
+        if pinFailureCount >= 10 {
+            lockoutDuration = 15 * 60
+        } else if pinFailureCount >= 7 {
+            lockoutDuration = 5 * 60
+        } else if pinFailureCount >= 5 {
+            lockoutDuration = 60
+        } else {
+            lockoutDuration = nil
+        }
+
+        if let lockoutDuration {
+            pinLockoutUntilEpoch = Date().addingTimeInterval(lockoutDuration).timeIntervalSince1970
+            pinErrorMessage = "Too many attempts. Try again in \(Int(lockoutDuration)) seconds."
+        } else {
+            pinErrorMessage = "Incorrect PIN. Please try again."
+        }
+    }
+
+    private func resetPinFailureState() {
+        pinFailureCount = 0
+        pinLockoutUntilEpoch = 0
     }
 
     private func visitor(with id: UUID?) -> VisitorRecord? {
@@ -883,6 +999,7 @@ private struct PinEntrySheet: View {
     let tabTitle: String
     @Binding var pinInput: String
     let errorMessage: String
+    let isUnlockDisabled: Bool
     let onCancel: () -> Void
     let onUnlock: () -> Void
 
@@ -911,7 +1028,51 @@ private struct PinEntrySheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Unlock", action: onUnlock)
-                        .disabled(pinInput.isEmpty)
+                        .disabled(pinInput.isEmpty || isUnlockDisabled)
+                }
+            }
+        }
+    }
+}
+
+private struct PinSetupSheet: View {
+    @Binding var pinInput: String
+    @Binding var confirmPinInput: String
+    let errorMessage: String
+    let canCancel: Bool
+    let onCancel: () -> Void
+    let onSave: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Set PIN") {
+                    Text("Set a 4 to 8 digit PIN to protect Sign In Book, Fire Roll Call, and Settings.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    SecureField("New PIN", text: $pinInput)
+                        .keyboardType(.numberPad)
+                    SecureField("Confirm PIN", text: $confirmPinInput)
+                        .keyboardType(.numberPad)
+
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("PIN Setup")
+            .toolbar {
+                if canCancel {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", action: onCancel)
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: onSave)
+                        .disabled(pinInput.isEmpty || confirmPinInput.isEmpty)
                 }
             }
         }
@@ -1264,7 +1425,8 @@ private enum VisitorCSVService {
         if rowLooksLikeHeader(firstRow) {
             return (firstRow.map(normalizeHeader), Array(rows.dropFirst()), 2)
         }
-        return (guessedHeader(forColumnCount: firstRow.count), rows, 1)
+        let includeID = likelyContainsIDColumn(rows)
+        return (guessedHeader(forColumnCount: firstRow.count, includeID: includeID), rows, 1)
     }
 
     private static func rowLooksLikeHeader(_ row: [String]) -> Bool {
@@ -1285,7 +1447,18 @@ private enum VisitorCSVService {
         return normalized.intersection(knownHeaders).count >= 2
     }
 
-    private static func guessedHeader(forColumnCount count: Int) -> [String] {
+    private static func likelyContainsIDColumn(_ rows: [[String]]) -> Bool {
+        let firstColumnSamples = rows
+            .prefix(10)
+            .compactMap { row in row.first?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard firstColumnSamples.count >= 2 else { return false }
+        let uuidCount = firstColumnSamples.filter { UUID(uuidString: $0) != nil }.count
+        return Double(uuidCount) / Double(firstColumnSamples.count) >= 0.8
+    }
+
+    private static func guessedHeader(forColumnCount count: Int, includeID: Bool) -> [String] {
         let withID = [
             "id",
             "first_name",
@@ -1309,8 +1482,12 @@ private enum VisitorCSVService {
             "checkout_method"
         ]
 
-        if count >= withID.count {
+        if includeID, count >= withID.count {
             return withID + (withID.count..<count).map { "column_\($0 + 1)" }
+        }
+
+        if !includeID, count >= withoutID.count {
+            return withoutID + (withoutID.count..<count).map { "column_\($0 + 1)" }
         }
 
         if count == withoutID.count {
