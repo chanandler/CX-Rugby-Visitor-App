@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import Charts
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -480,6 +481,12 @@ struct ContentView: View {
                 Section("Import / Restore") {
                     Button("Import from CSV") {
                         showingImporter = true
+                    }
+                }
+
+                Section("Analytics") {
+                    NavigationLink("Open Analytics Dashboard") {
+                        AnalyticsDashboardView(visitors: visitors)
                     }
                 }
 
@@ -1766,6 +1773,243 @@ private enum ImportError: LocalizedError {
             return message
         }
     }
+}
+
+private enum AnalyticsPeriod: String, CaseIterable, Identifiable {
+    case day = "Day"
+    case week = "Week"
+    case month = "Month"
+    case year = "Year"
+
+    var id: String { rawValue }
+}
+
+private struct AnalyticsBucket: Identifiable {
+    let start: Date
+    let label: String
+    let total: Int
+    let active: Int
+    let checkedOut: Int
+
+    var id: Date { start }
+}
+
+private struct AnalyticsDashboardView: View {
+    let visitors: [VisitorRecord]
+    @State private var period: AnalyticsPeriod = .week
+
+    private var buckets: [AnalyticsBucket] {
+        VisitorAnalyticsService.buckets(visitors: visitors, period: period)
+    }
+
+    private var totalVisitors: Int {
+        buckets.reduce(0) { $0 + $1.total }
+    }
+
+    private var totalActive: Int {
+        buckets.reduce(0) { $0 + $1.active }
+    }
+
+    private var totalCheckedOut: Int {
+        buckets.reduce(0) { $0 + $1.checkedOut }
+    }
+
+    private var busiestBucket: AnalyticsBucket? {
+        buckets.max { $0.total < $1.total }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Picker("Period", selection: $period) {
+                    ForEach(AnalyticsPeriod.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                    analyticsCard(title: "Total Visitors", value: "\(totalVisitors)", tint: .blue)
+                    analyticsCard(title: "Currently Active", value: "\(totalActive)", tint: .green)
+                    analyticsCard(title: "Checked Out", value: "\(totalCheckedOut)", tint: .orange)
+                    analyticsCard(
+                        title: "Peak \(period.rawValue)",
+                        value: busiestBucket.map { "\($0.label) (\($0.total))" } ?? "No Data",
+                        tint: .purple
+                    )
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Visitor Trends")
+                        .font(.headline)
+
+                    if buckets.allSatisfy({ $0.total == 0 }) {
+                        Text("No visitor activity for this period.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 30)
+                    } else {
+                        Chart {
+                            ForEach(buckets) { bucket in
+                                BarMark(
+                                    x: .value("Bucket", bucket.label),
+                                    y: .value("Visitors", bucket.total)
+                                )
+                                .foregroundStyle(.blue.gradient)
+                            }
+
+                            ForEach(buckets) { bucket in
+                                LineMark(
+                                    x: .value("Bucket", bucket.label),
+                                    y: .value("Active", bucket.active)
+                                )
+                                .foregroundStyle(.green)
+                                .symbol(Circle())
+                            }
+                        }
+                        .frame(height: 260)
+                    }
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            }
+            .padding()
+        }
+        .navigationTitle("Analytics")
+    }
+
+    @ViewBuilder
+    private func analyticsCard(title: String, value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline)
+                .foregroundStyle(tint)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private enum VisitorAnalyticsService {
+    static func buckets(visitors: [VisitorRecord], period: AnalyticsPeriod, now: Date = Date(), calendar: Calendar = .current) -> [AnalyticsBucket] {
+        guard let interval = periodInterval(for: period, now: now, calendar: calendar) else { return [] }
+        let starts = bucketStarts(for: period, interval: interval, calendar: calendar)
+
+        var totalByStart: [Date: Int] = [:]
+        var activeByStart: [Date: Int] = [:]
+        var checkedOutByStart: [Date: Int] = [:]
+
+        for visitor in visitors where interval.contains(visitor.checkInAt) {
+            let start = bucketStart(for: visitor.checkInAt, period: period, calendar: calendar)
+            totalByStart[start, default: 0] += 1
+            if visitor.isActive {
+                activeByStart[start, default: 0] += 1
+            } else {
+                checkedOutByStart[start, default: 0] += 1
+            }
+        }
+
+        return starts.map { start in
+            AnalyticsBucket(
+                start: start,
+                label: bucketLabel(for: start, period: period),
+                total: totalByStart[start, default: 0],
+                active: activeByStart[start, default: 0],
+                checkedOut: checkedOutByStart[start, default: 0]
+            )
+        }
+    }
+
+    private static func periodInterval(for period: AnalyticsPeriod, now: Date, calendar: Calendar) -> DateInterval? {
+        switch period {
+        case .day:
+            return calendar.dateInterval(of: .day, for: now)
+        case .week:
+            return calendar.dateInterval(of: .weekOfYear, for: now)
+        case .month:
+            return calendar.dateInterval(of: .month, for: now)
+        case .year:
+            return calendar.dateInterval(of: .year, for: now)
+        }
+    }
+
+    private static func bucketStarts(for period: AnalyticsPeriod, interval: DateInterval, calendar: Calendar) -> [Date] {
+        switch period {
+        case .day:
+            return (0..<24).compactMap { hour in
+                calendar.date(byAdding: .hour, value: hour, to: interval.start)
+            }
+        case .week:
+            return (0..<7).compactMap { day in
+                calendar.date(byAdding: .day, value: day, to: interval.start)
+            }
+        case .month:
+            let dayCount = calendar.range(of: .day, in: .month, for: interval.start)?.count ?? 30
+            return (0..<dayCount).compactMap { day in
+                calendar.date(byAdding: .day, value: day, to: interval.start)
+            }
+        case .year:
+            return (0..<12).compactMap { month in
+                calendar.date(byAdding: .month, value: month, to: interval.start)
+            }
+        }
+    }
+
+    private static func bucketStart(for date: Date, period: AnalyticsPeriod, calendar: Calendar) -> Date {
+        switch period {
+        case .day:
+            let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
+            return calendar.date(from: components) ?? date
+        case .week, .month:
+            return calendar.startOfDay(for: date)
+        case .year:
+            let components = calendar.dateComponents([.year, .month], from: date)
+            return calendar.date(from: components) ?? date
+        }
+    }
+
+    private static func bucketLabel(for date: Date, period: AnalyticsPeriod) -> String {
+        switch period {
+        case .day:
+            return hourFormatter.string(from: date)
+        case .week:
+            return weekdayFormatter.string(from: date)
+        case .month:
+            return monthDayFormatter.string(from: date)
+        case .year:
+            return monthFormatter.string(from: date)
+        }
+    }
+
+    private static let hourFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+
+    private static let monthDayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM"
+        return formatter
+    }()
+
+    private static let monthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter
+    }()
 }
 
 #Preview {
