@@ -10,4 +10,7 @@
    <FileRef
       location = "group:FEATURE_AND_IDEAS_TRACKING.md">
    </FileRef>
+   <FileRef
+      location = "group:EXEC_SUMMARY.md">
+   </FileRef>
 </Workspace>

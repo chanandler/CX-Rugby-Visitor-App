@@ -171,7 +171,7 @@ struct ContentView: View {
                             )
 
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("CX Rugby Visitor Hub")
+                            Text("Cemex Rugby Cement Plant")
                                 .font(.largeTitle.bold())
                                 .foregroundStyle(.white)
                             Text("Welcome. Please register before entering the site.")
