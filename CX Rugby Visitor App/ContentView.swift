@@ -10,6 +10,15 @@ struct ContentView: View {
     @AppStorage("autoCheckoutEnabled") private var autoCheckoutEnabled = true
     @AppStorage("autoBackupEnabled") private var autoBackupEnabled = true
     @AppStorage("backupRetentionDays") private var backupRetentionDays = 30
+    @AppStorage("securityPin") private var securityPin = "1234"
+
+    @State private var selectedTab: AppTab = .register
+    @State private var pendingProtectedTab: AppTab?
+    @State private var unlockedProtectedTabs: Set<AppTab> = []
+    @State private var pinInput = ""
+    @State private var pinErrorMessage = ""
+    @State private var showPinEntrySheet = false
+    @State private var newPinInput = ""
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -37,31 +46,36 @@ struct ContentView: View {
     @State private var importPreview: ImportPreview?
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             welcomeAndRegistrationTab
                 .tabItem {
                     Label("Register", systemImage: "person.badge.plus")
                 }
+                .tag(AppTab.register)
 
             leavingTab
                 .tabItem {
                     Label("I'm Leaving", systemImage: "rectangle.portrait.and.arrow.right")
                 }
+                .tag(AppTab.leaving)
 
             signInBookTab
                 .tabItem {
                     Label("Sign In Book", systemImage: "book.closed")
                 }
+                .tag(AppTab.signInBook)
 
             fireRollCallTab
                 .tabItem {
                     Label("Fire Roll Call", systemImage: "flame")
                 }
+                .tag(AppTab.fireRollCall)
 
             settingsTab
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }
+                .tag(AppTab.settings)
         }
         .onAppear {
             runMaintenance()
@@ -70,6 +84,9 @@ struct ContentView: View {
             if newPhase == .active {
                 runMaintenance()
             }
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            handleTabSelectionChange(oldValue: oldValue, newValue: newValue)
         }
         .alert("Registration", isPresented: $showRegistrationAlert) {
             Button("OK", role: .cancel) {}
@@ -90,6 +107,20 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(settingsMessage)
+        }
+        .sheet(isPresented: $showPinEntrySheet) {
+            PinEntrySheet(
+                tabTitle: pendingProtectedTab?.title ?? "Protected Area",
+                pinInput: $pinInput,
+                errorMessage: pinErrorMessage,
+                onCancel: {
+                    pendingProtectedTab = nil
+                    pinInput = ""
+                    pinErrorMessage = ""
+                    showPinEntrySheet = false
+                },
+                onUnlock: verifyPinAndUnlock
+            )
         }
         .sheet(item: $importPreview) { preview in
             ImportPreviewSheet(preview: preview) {
@@ -357,6 +388,23 @@ struct ContentView: View {
     private var settingsTab: some View {
         NavigationStack {
             List {
+                Section("Security") {
+                    Text("PIN protects Sign In Book, Fire Roll Call, and Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    SecureField("Set new PIN (4 to 8 digits)", text: $newPinInput)
+                        .keyboardType(.numberPad)
+
+                    Button("Update PIN") {
+                        updatePin()
+                    }
+
+                    Button("Lock Protected Areas Now") {
+                        relockProtectedAreas()
+                    }
+                }
+
                 Section("Operations") {
                     Toggle("Auto-checkout previous-day active visitors (weekdays)", isOn: $autoCheckoutEnabled)
                     Toggle("Automatic daily backups", isOn: $autoBackupEnabled)
@@ -441,6 +489,54 @@ struct ContentView: View {
             return "Confirm this visitor has left the site."
         }
         return "Check out \(candidate.fullName)?"
+    }
+
+    private func handleTabSelectionChange(oldValue: AppTab, newValue: AppTab) {
+        guard newValue.isProtected, !unlockedProtectedTabs.contains(newValue) else {
+            return
+        }
+
+        pendingProtectedTab = newValue
+        pinInput = ""
+        pinErrorMessage = ""
+        selectedTab = oldValue
+        showPinEntrySheet = true
+    }
+
+    private func verifyPinAndUnlock() {
+        guard let pendingProtectedTab else { return }
+
+        if pinInput == securityPin {
+            unlockedProtectedTabs.insert(pendingProtectedTab)
+            selectedTab = pendingProtectedTab
+            self.pendingProtectedTab = nil
+            pinInput = ""
+            pinErrorMessage = ""
+            showPinEntrySheet = false
+        } else {
+            pinErrorMessage = "Incorrect PIN. Please try again."
+        }
+    }
+
+    private func relockProtectedAreas() {
+        unlockedProtectedTabs.removeAll()
+        if selectedTab.isProtected {
+            selectedTab = .register
+        }
+    }
+
+    private func updatePin() {
+        let digitsOnly = newPinInput.filter { $0.isNumber }
+        guard (4...8).contains(digitsOnly.count) else {
+            settingsMessage = "PIN must be 4 to 8 digits."
+            showSettingsAlert = true
+            return
+        }
+
+        securityPin = digitsOnly
+        newPinInput = ""
+        settingsMessage = "PIN updated successfully."
+        showSettingsAlert = true
     }
 
     private func visitor(with id: UUID?) -> VisitorRecord? {
@@ -634,12 +730,83 @@ struct ContentView: View {
     }
 }
 
+private enum AppTab: Hashable {
+    case register
+    case leaving
+    case signInBook
+    case fireRollCall
+    case settings
+
+    var isProtected: Bool {
+        switch self {
+        case .signInBook, .fireRollCall, .settings:
+            return true
+        case .register, .leaving:
+            return false
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .register:
+            return "Register"
+        case .leaving:
+            return "I'm Leaving"
+        case .signInBook:
+            return "Sign In Book"
+        case .fireRollCall:
+            return "Fire Roll Call"
+        case .settings:
+            return "Settings"
+        }
+    }
+}
+
 private enum SignInScope: String, CaseIterable, Identifiable {
     case active = "Active"
     case archived = "Archived"
     case all = "All"
 
     var id: String { rawValue }
+}
+
+private struct PinEntrySheet: View {
+    let tabTitle: String
+    @Binding var pinInput: String
+    let errorMessage: String
+    let onCancel: () -> Void
+    let onUnlock: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Protected Area") {
+                    Text("Enter PIN to access \(tabTitle).")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    SecureField("PIN", text: $pinInput)
+                        .keyboardType(.numberPad)
+
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("PIN Required")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onCancel)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Unlock", action: onUnlock)
+                        .disabled(pinInput.isEmpty)
+                }
+            }
+        }
+    }
 }
 
 private struct ImportPreviewSheet: View {
