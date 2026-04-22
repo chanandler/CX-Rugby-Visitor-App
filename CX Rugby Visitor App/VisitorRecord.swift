@@ -6,7 +6,6 @@ final class VisitorRecord {
     var id: UUID
     var firstName: String
     var lastName: String
-    var identityType: String
     var identityNumber: String
     var company: String
     var host: String
@@ -20,7 +19,6 @@ final class VisitorRecord {
         id: UUID = UUID(),
         firstName: String,
         lastName: String,
-        identityType: String,
         identityNumber: String,
         company: String,
         host: String,
@@ -33,7 +31,6 @@ final class VisitorRecord {
         self.id = id
         self.firstName = firstName
         self.lastName = lastName
-        self.identityType = identityType
         self.identityNumber = identityNumber
         self.company = company
         self.host = host

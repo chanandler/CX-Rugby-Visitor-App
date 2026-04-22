@@ -26,7 +26,6 @@ struct ContentView: View {
 
     @State private var firstName = ""
     @State private var lastName = ""
-    @State private var identityType = "Driver License"
     @State private var identityNumber = ""
     @State private var company = ""
     @State private var host = ""
@@ -197,14 +196,6 @@ struct ContentView: View {
                                 .textFieldStyle(.roundedBorder)
                         }
 
-                        Picker("Identity type", selection: $identityType) {
-                            Text("Driver License").tag("Driver License")
-                            Text("Passport").tag("Passport")
-                            Text("National ID").tag("National ID")
-                            Text("Other").tag("Other")
-                        }
-                        .pickerStyle(.segmented)
-
                         TextField("Identity number *", text: $identityNumber)
                             .textFieldStyle(.roundedBorder)
 
@@ -317,7 +308,7 @@ struct ContentView: View {
                             VStack(alignment: .leading, spacing: 5) {
                                 Text(visitor.fullName)
                                     .font(.headline)
-                                Text("ID: \(visitor.identityType) \(visitor.identityNumber)")
+                                Text("ID: \(visitor.identityNumber)")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 Text("Company: \(visitor.company) • Host: \(visitor.host)")
@@ -622,7 +613,6 @@ struct ContentView: View {
         let visitor = VisitorRecord(
             firstName: cleanedFirstName,
             lastName: cleanedLastName,
-            identityType: identityType,
             identityNumber: cleanedIdentityNumber,
             company: cleanedCompany,
             host: cleanedHost,
@@ -719,7 +709,6 @@ struct ContentView: View {
                     id: row.seed.id,
                     firstName: row.seed.firstName,
                     lastName: row.seed.lastName,
-                    identityType: row.seed.identityType,
                     identityNumber: row.seed.identityNumber,
                     company: row.seed.company,
                     host: row.seed.host,
@@ -962,7 +951,6 @@ private struct VisitorSeed {
     let id: UUID
     let firstName: String
     let lastName: String
-    let identityType: String
     let identityNumber: String
     let company: String
     let host: String
@@ -995,7 +983,6 @@ private enum VisitorCSVService {
             "id",
             "first_name",
             "last_name",
-            "identity_type",
             "identity_number",
             "company",
             "host",
@@ -1010,7 +997,6 @@ private enum VisitorCSVService {
                 visitor.id.uuidString,
                 visitor.firstName,
                 visitor.lastName,
-                visitor.identityType,
                 visitor.identityNumber,
                 visitor.company,
                 visitor.host,
@@ -1104,11 +1090,6 @@ private enum VisitorCSVService {
             defaultValue: "Visitor"
         )
 
-        let idType = nonEmpty(
-            value(from: values, keys: ["identity_type", "id_type", "identity", "document_type"]),
-            defaultValue: "Unknown ID"
-        )
-
         let idNumber = nonEmpty(
             value(from: values, keys: ["identity_number", "id_number", "id", "document_number"]),
             defaultValue: "UNKNOWN-\(rowNumber)"
@@ -1145,7 +1126,6 @@ private enum VisitorCSVService {
             id: id,
             firstName: firstName,
             lastName: lastName,
-            identityType: idType,
             identityNumber: idNumber,
             company: company,
             host: host,
