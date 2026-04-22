@@ -19,6 +19,10 @@ struct ContentView: View {
     @State private var pinErrorMessage = ""
     @State private var showPinEntrySheet = false
     @State private var newPinInput = ""
+    @State private var lastUserActivityAt = Date()
+    @State private var backgroundEnteredAt: Date?
+
+    private let autoRelockInterval: TimeInterval = 5 * 60
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -78,16 +82,29 @@ struct ContentView: View {
                 .tag(AppTab.settings)
         }
         .onAppear {
+            markUserActivity()
             runMaintenance()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                runMaintenance()
-            }
+            handleScenePhaseChange(newPhase)
         }
         .onChange(of: selectedTab) { oldValue, newValue in
+            markUserActivity()
             handleTabSelectionChange(oldValue: oldValue, newValue: newValue)
         }
+        .task {
+            await monitorInactivity()
+        }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                markUserActivity()
+            }
+        )
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0).onChanged { _ in
+                markUserActivity()
+            }
+        )
         .alert("Registration", isPresented: $showRegistrationAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -491,6 +508,42 @@ struct ContentView: View {
         return "Check out \(candidate.fullName)?"
     }
 
+    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        switch newPhase {
+        case .active:
+            runMaintenance()
+            if let backgroundEnteredAt,
+               Date().timeIntervalSince(backgroundEnteredAt) >= autoRelockInterval {
+                relockProtectedAreas()
+            }
+            self.backgroundEnteredAt = nil
+            markUserActivity()
+        case .inactive, .background:
+            if backgroundEnteredAt == nil {
+                backgroundEnteredAt = Date()
+            }
+        @unknown default:
+            break
+        }
+    }
+
+    private func performAutoRelockCheck() {
+        guard scenePhase == .active, !unlockedProtectedTabs.isEmpty else { return }
+        guard Date().timeIntervalSince(lastUserActivityAt) >= autoRelockInterval else { return }
+        relockProtectedAreas()
+    }
+
+    private func monitorInactivity() async {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(30))
+            performAutoRelockCheck()
+        }
+    }
+
+    private func markUserActivity() {
+        lastUserActivityAt = Date()
+    }
+
     private func handleTabSelectionChange(oldValue: AppTab, newValue: AppTab) {
         guard newValue.isProtected, !unlockedProtectedTabs.contains(newValue) else {
             return
@@ -513,6 +566,7 @@ struct ContentView: View {
             pinInput = ""
             pinErrorMessage = ""
             showPinEntrySheet = false
+            markUserActivity()
         } else {
             pinErrorMessage = "Incorrect PIN. Please try again."
         }
@@ -520,6 +574,10 @@ struct ContentView: View {
 
     private func relockProtectedAreas() {
         unlockedProtectedTabs.removeAll()
+        pendingProtectedTab = nil
+        pinInput = ""
+        pinErrorMessage = ""
+        showPinEntrySheet = false
         if selectedTab.isProtected {
             selectedTab = .register
         }
