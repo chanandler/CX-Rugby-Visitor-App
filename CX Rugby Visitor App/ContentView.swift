@@ -105,13 +105,37 @@ struct ContentView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    VStack(spacing: 8) {
-                        Text("CX Rugby Visitor Hub")
-                            .font(.largeTitle.bold())
-                        Text("Welcome. Please register before entering the site.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    ZStack(alignment: .bottomLeading) {
+                        Image("Rugby_Cement_Plant")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 220)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .overlay(
+                                LinearGradient(
+                                    colors: [Color.clear, Color.black.opacity(0.68)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("CX Rugby Visitor Hub")
+                                .font(.largeTitle.bold())
+                                .foregroundStyle(.white)
+                            Text("Welcome. Please register before entering the site.")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.92))
+                        }
+                        .padding(16)
                     }
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
                     .padding(.top, 10)
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -157,7 +181,11 @@ struct ContentView: View {
                         .padding(.top, 6)
                     }
                     .padding()
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                    )
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Active Visitors: \(activeVisitors.count)")
