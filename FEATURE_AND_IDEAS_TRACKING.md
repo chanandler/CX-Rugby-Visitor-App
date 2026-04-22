@@ -22,7 +22,7 @@ Track delivered features, planned enhancements, and future ideas.
 - Title: Inline field-level validation on registration form
 - Type: UX / Data Quality
 - Priority: High
-- Status: Completed
+- Status: ✅ Completed
 - Summary: Add inline validation messages and field highlighting for missing or invalid required fields before register action.
 - Value: Reduces invalid submissions and improves receptionist guidance.
 
@@ -41,6 +41,7 @@ Track delivered features, planned enhancements, and future ideas.
 - Status: Proposed
 - Summary: Add unit tests for CSV parsing, duplicate detection, and auto-checkout logic using Apple Testing framework.
 - Value: Prevents regressions and increases confidence for future changes.
+
 ### IDEA-004
 - Title: CSV import mapping assistant for headerless files
 - Type: Reliability / Data Quality
@@ -56,3 +57,12 @@ Track delivered features, planned enhancements, and future ideas.
 - Status: Proposed
 - Summary: Store PIN in Keychain, force setup/change from default on first run, and add retry lockout/backoff with optional admin reset.
 - Value: Reduces unauthorized access risk for protected operational screens.
+
+### IDEA-006
+- Title: Analytics dashboard with period switching
+- Type: Reporting / Insights
+- Priority: High
+- Status: Proposed
+- Summary: Add an Analytics option in Settings that opens a visually rich dashboard with charts and KPI cards, with user-selectable time windows (day, week, month, year).
+- Value: Gives reception and site leadership an at-a-glance view of visitor trends, peak times, and operational patterns.
+
