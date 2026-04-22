@@ -10,36 +10,6 @@ Track confirmed issues here.
 
 ## Bugs
 
-### BUG-005 (Priority: P3)
-- Status: Open
-- Title: Global drag gesture updates activity timestamp continuously, causing unnecessary UI churn
-- Area: Performance
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: Medium
-- File/Reference: `CX Rugby Visitor App/ContentView.swift:102-105`, `556-558`
-- Steps to Reproduce:
-1. Scroll lists/forms for several seconds.
-2. Observe frequent state updates from root `DragGesture(minimumDistance: 0)`.
-- Expected Result: Activity tracking should be lightweight and event-efficient.
-- Actual Result: Every drag change updates state, increasing recomposition frequency and battery use.
-- Notes: Throttle/debounce activity updates or use less chatty interaction hooks.
-
-### BUG-006 (Priority: P3)
-- Status: Open
-- Title: Date parsing recreates `DateFormatter` objects repeatedly in hot path
-- Area: Performance
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: Low
-- File/Reference: `CX Rugby Visitor App/ContentView.swift:1216-1221`
-- Steps to Reproduce:
-1. Import large CSV with many date fields.
-2. Profile import time/allocation behavior.
-- Expected Result: Reuse cached formatters.
-- Actual Result: New formatter instances are created for each parse attempt.
-- Notes: Cache fallback formatters as static properties to reduce allocation overhead.
-
 ### BUG-001 (Priority: P1)
 - Status: ✅ Resolved
 - Title: SwiftData schema changes have no migration plan and risk upgrade failure/data loss
@@ -104,3 +74,35 @@ Track confirmed issues here.
 - Actual Result (Before Fix): Row 1 was always treated as header and omitted from data import.
 - Resolution: Added header detection (`rowLooksLikeHeader`) and fallback positional header guessing. When no header is detected, import now treats row 1 as data and applies safe default column mapping.
 - Verified: Project builds successfully with updated import behavior.
+
+### BUG-005 (Priority: P3)
+- Status: ✅ Resolved
+- Title: Global drag gesture updates activity timestamp continuously, causing unnecessary UI churn
+- Area: Performance
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: Medium
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Scroll lists/forms for several seconds.
+2. Observe frequent state updates from root `DragGesture(minimumDistance: 0)`.
+- Expected Result: Activity tracking should be lightweight and event-efficient.
+- Actual Result (Before Fix): Every drag change updated activity state and increased recomposition frequency.
+- Resolution: Changed activity tracking drag hook from `.onChanged` to `.onEnded`, reducing updates to once per gesture.
+- Verified: Project builds successfully with updated activity tracking.
+
+### BUG-006 (Priority: P3)
+- Status: ✅ Resolved
+- Title: Date parsing recreates `DateFormatter` objects repeatedly in hot path
+- Area: Performance
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: Low
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Import large CSV with many date fields.
+2. Profile import time/allocation behavior.
+- Expected Result: Reuse cached formatters.
+- Actual Result (Before Fix): New formatter instances were created for each parse attempt.
+- Resolution: Added static cached `fallbackDateFormatters` and reused them in `parseDateString(_:)`.
+- Verified: Project builds successfully with cached formatter parsing.

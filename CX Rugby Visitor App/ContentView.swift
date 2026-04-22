@@ -100,7 +100,7 @@ struct ContentView: View {
             }
         )
         .simultaneousGesture(
-            DragGesture(minimumDistance: 0).onChanged { _ in
+            DragGesture(minimumDistance: 0).onEnded { _ in
                 markUserActivity()
             }
         )
@@ -1044,6 +1044,18 @@ private enum VisitorCSVService {
         return formatter
     }()
 
+    static let fallbackDateFormatters: [DateFormatter] = [
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "MM/dd/yyyy HH:mm",
+        "yyyy-MM-dd"
+    ].map { format in
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = format
+        return formatter
+    }
+
     static func csvString(from visitors: [VisitorRecord]) -> String {
         let header = [
             "id",
@@ -1222,17 +1234,7 @@ private enum VisitorCSVService {
             return iso
         }
 
-        let fallbackFormats = [
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "MM/dd/yyyy HH:mm",
-            "yyyy-MM-dd"
-        ]
-
-        for format in fallbackFormats {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.dateFormat = format
+        for formatter in fallbackDateFormatters {
             if let date = formatter.date(from: value) {
                 return date
             }
