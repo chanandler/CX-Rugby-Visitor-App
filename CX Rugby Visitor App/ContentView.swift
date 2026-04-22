@@ -291,12 +291,22 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    Picker("Scope", selection: $signInScope) {
-                        ForEach(SignInScope.allCases) { scope in
-                            Text(scope.rawValue).tag(scope)
+                    HStack(spacing: 8) {
+                        ForEach(SignInScope.allCases, id: \.self) { scope in
+                            Button(scope.rawValue) {
+                                signInScope = scope
+                            }
+                            .buttonStyle(.plain)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(signInScope == scope ? .white : .primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(signInScope == scope ? Color.accentColor : Color.gray.opacity(0.15))
+                            )
                         }
                     }
-                    .pickerStyle(.segmented)
                 }
 
                 Section("Records") {
