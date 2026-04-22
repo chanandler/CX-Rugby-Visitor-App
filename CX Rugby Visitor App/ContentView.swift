@@ -52,6 +52,9 @@ struct ContentView: View {
     @State private var backupURL: URL?
     @State private var settingsMessage = ""
     @State private var showSettingsAlert = false
+    @State private var rollCallMessage = ""
+    @State private var showRollCallAlert = false
+    @State private var rollCallSessionConfirmedIDs: Set<UUID> = []
 
     @State private var showingImporter = false
     @State private var importPreview: ImportPreview?
@@ -134,6 +137,11 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(settingsMessage)
+        }
+        .alert("Fire Roll Call", isPresented: $showRollCallAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(rollCallMessage)
         }
         .sheet(isPresented: $showPinEntrySheet) {
             PinEntrySheet(
@@ -429,7 +437,7 @@ struct ContentView: View {
                                 }
                                 Spacer()
                                 Button("Confirm Out") {
-                                    checkout(visitor: visitor, method: "Fire Roll Call")
+                                    checkoutFromRollCall(visitor)
                                 }
                                 .buttonStyle(.borderedProminent)
                             }
@@ -443,6 +451,8 @@ struct ContentView: View {
                         Button("Confirm All Out", role: .destructive) {
                             confirmAllOutFromRollCall()
                         }
+                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
 
@@ -592,11 +602,10 @@ struct ContentView: View {
     }
 
     private var rollCallConfirmedOutVisitors: [VisitorRecord] {
-        let startOfToday = Calendar.current.startOfDay(for: Date())
         return visitors
             .filter { visitor in
-                guard let checkedOutAt = visitor.checkedOutAt else { return false }
-                return visitor.checkoutMethod == "Fire Roll Call" && checkedOutAt >= startOfToday
+                guard visitor.checkedOutAt != nil else { return false }
+                return rollCallSessionConfirmedIDs.contains(visitor.id) || visitor.checkoutMethod == "Fire Roll Call"
             }
             .sorted { lhs, rhs in
                 (lhs.checkedOutAt ?? .distantPast) > (rhs.checkedOutAt ?? .distantPast)
@@ -904,16 +913,31 @@ struct ContentView: View {
         saveContext()
     }
 
+    private func checkoutFromRollCall(_ visitor: VisitorRecord) {
+        guard visitor.isActive else { return }
+        visitor.checkedOutAt = Date()
+        visitor.checkoutMethod = "Fire Roll Call"
+        rollCallSessionConfirmedIDs.insert(visitor.id)
+        saveContext()
+    }
+
     private func confirmAllOutFromRollCall() {
         let visitorsToCheckout = activeVisitors
-        guard !visitorsToCheckout.isEmpty else { return }
+        guard !visitorsToCheckout.isEmpty else {
+            rollCallMessage = "There are no active visitors to confirm out."
+            showRollCallAlert = true
+            return
+        }
 
         let now = Date()
         for visitor in visitorsToCheckout where visitor.isActive {
             visitor.checkedOutAt = now
             visitor.checkoutMethod = "Fire Roll Call"
+            rollCallSessionConfirmedIDs.insert(visitor.id)
         }
         saveContext()
+        rollCallMessage = "Confirmed out \(visitorsToCheckout.count) visitor(s)."
+        showRollCallAlert = true
     }
 
     private func exportCSV() {
