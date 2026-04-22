@@ -1088,13 +1088,7 @@ private enum VisitorCSVService {
             return ImportPreview(rows: [], parseFailures: [ImportFailure(rowNumber: 1, reason: "No rows found in CSV")])
         }
 
-        let header = rows[0].map {
-            $0
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
-                .replacingOccurrences(of: "-", with: "_")
-                .replacingOccurrences(of: " ", with: "_")
-        }
+        let (header, dataRows, firstDataRowNumber) = resolveHeaderAndDataRows(rows)
         var previews: [ImportRowPreview] = []
         var failures: [ImportFailure] = []
 
@@ -1109,8 +1103,8 @@ private enum VisitorCSVService {
             )
         })
 
-        for (index, row) in rows.dropFirst().enumerated() {
-            let rowNumber = index + 2
+        for (index, row) in dataRows.enumerated() {
+            let rowNumber = firstDataRowNumber + index
             if row.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
                 continue
             }
@@ -1261,6 +1255,71 @@ private enum VisitorCSVService {
             .lowercased()
             .replacingOccurrences(of: "-", with: "_")
             .replacingOccurrences(of: " ", with: "_")
+    }
+
+    private static func resolveHeaderAndDataRows(_ rows: [[String]]) -> ([String], [[String]], Int) {
+        let firstRow = rows[0]
+        if rowLooksLikeHeader(firstRow) {
+            return (firstRow.map(normalizeHeader), Array(rows.dropFirst()), 2)
+        }
+        return (guessedHeader(forColumnCount: firstRow.count), rows, 1)
+    }
+
+    private static func rowLooksLikeHeader(_ row: [String]) -> Bool {
+        let normalized = Set(row.map(normalizeHeader))
+        let knownHeaders: Set<String> = [
+            "id",
+            "first_name",
+            "last_name",
+            "company",
+            "host",
+            "car_registration",
+            "check_in_at",
+            "checked_out_at",
+            "checkout_method",
+            "name",
+            "full_name"
+        ]
+        return normalized.intersection(knownHeaders).count >= 2
+    }
+
+    private static func guessedHeader(forColumnCount count: Int) -> [String] {
+        let withID = [
+            "id",
+            "first_name",
+            "last_name",
+            "company",
+            "host",
+            "car_registration",
+            "check_in_at",
+            "checked_out_at",
+            "checkout_method"
+        ]
+
+        let withoutID = [
+            "first_name",
+            "last_name",
+            "company",
+            "host",
+            "car_registration",
+            "check_in_at",
+            "checked_out_at",
+            "checkout_method"
+        ]
+
+        if count >= withID.count {
+            return withID + (withID.count..<count).map { "column_\($0 + 1)" }
+        }
+
+        if count == withoutID.count {
+            return withoutID
+        }
+
+        if count < withoutID.count {
+            return Array(withoutID.prefix(count))
+        }
+
+        return withoutID + (withoutID.count..<count).map { "column_\($0 + 1)" }
     }
 
     static func visitSignature(firstName: String, lastName: String, company: String, host: String, checkInAt: Date) -> String {

@@ -10,21 +10,6 @@ Track confirmed issues here.
 
 ## Bugs
 
-### BUG-004 (Priority: P2)
-- Status: Open
-- Title: Import assumes first CSV row is header and drops row 1 data when header is missing
-- Area: Import/Restore
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: Medium
-- File/Reference: `CX Rugby Visitor App/ContentView.swift:1076`, `1091`
-- Steps to Reproduce:
-1. Import a CSV without headers where row 1 is a real visitor record.
-2. Run preview/import.
-- Expected Result: Row 1 is imported or user is warned and asked for mapping.
-- Actual Result: Row 1 is treated as header and omitted from data import.
-- Notes: Detect header presence or provide explicit “CSV has headers” option.
-
 ### BUG-005 (Priority: P3)
 - Status: Open
 - Title: Global drag gesture updates activity timestamp continuously, causing unnecessary UI churn
@@ -103,3 +88,19 @@ Track confirmed issues here.
 - Actual Result (Before Fix): Duplicate key used low precision (`first+last+company+day`) and caused false suppression.
 - Resolution: Duplicate detection now uses both record `id` (when present) and a higher-precision visit signature (`first+last+company+host+exact check-in timestamp`) for existing and incoming records.
 - Verified: Project builds successfully with updated duplicate handling.
+
+### BUG-004 (Priority: P2)
+- Status: ✅ Resolved
+- Title: Import assumes first CSV row is header and drops row 1 data when header is missing
+- Area: Import/Restore
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: Medium
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Import a CSV without headers where row 1 is a real visitor record.
+2. Run preview/import.
+- Expected Result: Row 1 is imported or user is warned and asked for mapping.
+- Actual Result (Before Fix): Row 1 was always treated as header and omitted from data import.
+- Resolution: Added header detection (`rowLooksLikeHeader`) and fallback positional header guessing. When no header is detected, import now treats row 1 as data and applies safe default column mapping.
+- Verified: Project builds successfully with updated import behavior.
