@@ -1020,9 +1020,14 @@ private struct VisitorSeed {
     let checkedOutAt: Date?
     let checkoutMethod: String
 
-    var duplicateKey: String {
-        let dayKey = VisitorCSVService.dayFormatter.string(from: checkInAt)
-        return "\(firstName.lowercased())|\(lastName.lowercased())|\(company.lowercased())|\(dayKey)"
+    var visitSignature: String {
+        VisitorCSVService.visitSignature(
+            firstName: firstName,
+            lastName: lastName,
+            company: company,
+            host: host,
+            checkInAt: checkInAt
+        )
     }
 }
 
@@ -1093,9 +1098,15 @@ private enum VisitorCSVService {
         var previews: [ImportRowPreview] = []
         var failures: [ImportFailure] = []
 
-        var seenDuplicateKeys = Set(existing.map { existing in
-            let day = dayFormatter.string(from: existing.checkInAt)
-            return "\(existing.firstName.lowercased())|\(existing.lastName.lowercased())|\(existing.company.lowercased())|\(day)"
+        var seenRecordIDs = Set(existing.map(\.id))
+        var seenVisitSignatures = Set(existing.map { existing in
+            visitSignature(
+                firstName: existing.firstName,
+                lastName: existing.lastName,
+                company: existing.company,
+                host: existing.host,
+                checkInAt: existing.checkInAt
+            )
         })
 
         for (index, row) in rows.dropFirst().enumerated() {
@@ -1106,9 +1117,10 @@ private enum VisitorCSVService {
 
             do {
                 let seed = try makeSeed(row: row, header: header, rowNumber: rowNumber)
-                let isDuplicate = seenDuplicateKeys.contains(seed.duplicateKey)
+                let isDuplicate = seenRecordIDs.contains(seed.id) || seenVisitSignatures.contains(seed.visitSignature)
                 if !isDuplicate {
-                    seenDuplicateKeys.insert(seed.duplicateKey)
+                    seenRecordIDs.insert(seed.id)
+                    seenVisitSignatures.insert(seed.visitSignature)
                 }
 
                 previews.append(
@@ -1249,6 +1261,11 @@ private enum VisitorCSVService {
             .lowercased()
             .replacingOccurrences(of: "-", with: "_")
             .replacingOccurrences(of: " ", with: "_")
+    }
+
+    static func visitSignature(firstName: String, lastName: String, company: String, host: String, checkInAt: Date) -> String {
+        let timestampKey = isoFormatter.string(from: checkInAt)
+        return "\(firstName.lowercased())|\(lastName.lowercased())|\(company.lowercased())|\(host.lowercased())|\(timestampKey)"
     }
 
     private static func splitName(_ fullName: String) -> (first: String, last: String) {

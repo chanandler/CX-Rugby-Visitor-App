@@ -10,21 +10,6 @@ Track confirmed issues here.
 
 ## Bugs
 
-### BUG-003 (Priority: P2)
-- Status: Open
-- Title: Duplicate detection key is too coarse and can drop legitimate visits
-- Area: Import/Restore
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift:1013-1016`, `1086-1089`
-- Steps to Reproduce:
-1. Import two valid visits on same day for same person/company (e.g., leaves and returns later).
-2. Import preview marks later entry as duplicate.
-- Expected Result: Distinct visits are retained.
-- Actual Result: Key uses `first+last+company+day`, causing false duplicate suppression.
-- Notes: Include higher-precision visit identity (e.g., check-in timestamp + host + optional external ID).
-
 ### BUG-004 (Priority: P2)
 - Status: Open
 - Title: Import assumes first CSV row is header and drops row 1 data when header is missing
@@ -102,3 +87,19 @@ Track confirmed issues here.
 - Actual Result (Before Fix): `Data(contentsOf:)` was called directly without security-scoped resource lifecycle management.
 - Resolution: Added `readImportData(from:)` helper that calls `startAccessingSecurityScopedResource()`, reads data, and guarantees `stopAccessingSecurityScopedResource()` via `defer`.
 - Verified: Project builds successfully with updated import flow.
+
+### BUG-003 (Priority: P2)
+- Status: ✅ Resolved
+- Title: Duplicate detection key is too coarse and can drop legitimate visits
+- Area: Import/Restore
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Import two valid visits on same day for same person/company (e.g., leaves and returns later).
+2. Import preview marks later entry as duplicate.
+- Expected Result: Distinct visits are retained.
+- Actual Result (Before Fix): Duplicate key used low precision (`first+last+company+day`) and caused false suppression.
+- Resolution: Duplicate detection now uses both record `id` (when present) and a higher-precision visit signature (`first+last+company+host+exact check-in timestamp`) for existing and incoming records.
+- Verified: Project builds successfully with updated duplicate handling.
