@@ -63,6 +63,6 @@ Track delivered features, planned enhancements, and future ideas.
 - Title: Analytics dashboard with period switching
 - Type: Reporting / Insights
 - Priority: High
-- Status: Completed
+- Status: ✅ Completed
 - Summary: Add an Analytics option in Settings that opens a visually rich dashboard with charts and KPI cards, with user-selectable time windows (day, week, month, year).
 - Value: Gives reception and site leadership an at-a-glance view of visitor trends, peak times, and operational patterns.

@@ -441,9 +441,28 @@ struct ContentView: View {
                 if !activeVisitors.isEmpty {
                     Section {
                         Button("Confirm All Out", role: .destructive) {
-                            for visitor in activeVisitors {
-                                checkout(visitor: visitor, method: "Fire Roll Call")
+                            confirmAllOutFromRollCall()
+                        }
+                    }
+                }
+
+                Section("Confirmed Out (\(rollCallConfirmedOutVisitors.count))") {
+                    if rollCallConfirmedOutVisitors.isEmpty {
+                        Text("No visitors confirmed out yet.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(rollCallConfirmedOutVisitors, id: \.id) { visitor in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(visitor.fullName)
+                                    .font(.headline)
+                                Text("\(visitor.company) • Host: \(visitor.host)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("Confirmed out at \(visitor.checkedOutAt?.formatted(date: .omitted, time: .shortened) ?? "-")")
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
                             }
+                            .padding(.vertical, 2)
                         }
                     }
                 }
@@ -570,6 +589,18 @@ struct ContentView: View {
                 .lowercased()
             return haystack.contains(term.lowercased())
         }
+    }
+
+    private var rollCallConfirmedOutVisitors: [VisitorRecord] {
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        return visitors
+            .filter { visitor in
+                guard let checkedOutAt = visitor.checkedOutAt else { return false }
+                return visitor.checkoutMethod == "Fire Roll Call" && checkedOutAt >= startOfToday
+            }
+            .sorted { lhs, rhs in
+                (lhs.checkedOutAt ?? .distantPast) > (rhs.checkedOutAt ?? .distantPast)
+            }
     }
 
     private var checkoutConfirmationMessage: String {
@@ -870,6 +901,18 @@ struct ContentView: View {
         guard visitor.isActive else { return }
         visitor.checkedOutAt = Date()
         visitor.checkoutMethod = method
+        saveContext()
+    }
+
+    private func confirmAllOutFromRollCall() {
+        let visitorsToCheckout = activeVisitors
+        guard !visitorsToCheckout.isEmpty else { return }
+
+        let now = Date()
+        for visitor in visitorsToCheckout where visitor.isActive {
+            visitor.checkedOutAt = now
+            visitor.checkoutMethod = "Fire Roll Call"
+        }
         saveContext()
     }
 
