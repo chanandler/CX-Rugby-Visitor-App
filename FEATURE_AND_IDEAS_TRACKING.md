@@ -40,3 +40,19 @@ Track delivered features, planned enhancements, and future ideas.
 - Status: Proposed
 - Summary: Add unit tests for CSV parsing, duplicate detection, and auto-checkout logic using Apple Testing framework.
 - Value: Prevents regressions and increases confidence for future changes.
+### IDEA-004
+- Title: CSV import mapping assistant for headerless files
+- Type: Reliability / Data Quality
+- Priority: High
+- Status: Proposed
+- Summary: Add a lightweight column-mapping confirmation UI (or smarter UUID-based auto-detection) when CSV headers are missing or ambiguous.
+- Value: Prevents silent field shifts and bad imports from non-standard CSV formats.
+
+### IDEA-005
+- Title: Harden PIN security controls
+- Type: Security / Governance
+- Priority: High
+- Status: Proposed
+- Summary: Store PIN in Keychain, force setup/change from default on first run, and add retry lockout/backoff with optional admin reset.
+- Value: Reduces unauthorized access risk for protected operational screens.
+
