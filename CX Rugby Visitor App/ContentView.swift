@@ -720,7 +720,7 @@ struct ContentView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
             do {
-                let data = try Data(contentsOf: url)
+                let data = try readImportData(from: url)
                 guard let content = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii) else {
                     settingsMessage = "Could not read CSV text."
                     showSettingsAlert = true
@@ -739,6 +739,16 @@ struct ContentView: View {
                 showSettingsAlert = true
             }
         }
+    }
+
+    private func readImportData(from url: URL) throws -> Data {
+        let hasSecurityAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if hasSecurityAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        return try Data(contentsOf: url)
     }
 
     private func applyImport(_ preview: ImportPreview) {

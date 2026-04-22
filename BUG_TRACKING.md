@@ -10,37 +10,6 @@ Track confirmed issues here.
 
 ## Bugs
 
-### BUG-001 (Priority: P1)
-- Status: Open
-- Title: SwiftData schema changes have no migration plan and risk upgrade failure/data loss
-- Area: Data Persistence
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: Critical
-- File/Reference: `CX Rugby Visitor App/VisitorRecord.swift`
-- Steps to Reproduce:
-1. Install an older build that used previous `VisitorRecord` fields.
-2. Create visitor data.
-3. Upgrade to the current build.
-- Expected Result: Existing data migrates safely.
-- Actual Result: No explicit migration/versioning is defined; schema evolution may fail at launch or lose prior fields.
-- Notes: Add a versioned schema + migration plan before shipping further model changes.
-
-### BUG-002 (Priority: P2)
-- Status: Open
-- Title: CSV import may fail for external file providers due to missing security-scoped access
-- Area: Import/Restore
-- Reported By: Code review
-- Date Reported: 2026-04-22
-- Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift:721-724`
-- Steps to Reproduce:
-1. Import CSV from Files app provider (e.g., iCloud/third-party provider).
-2. Attempt import on constrained file provider access.
-- Expected Result: Import reads file reliably.
-- Actual Result: `Data(contentsOf:)` is used without `startAccessingSecurityScopedResource()`, which can fail on some providers.
-- Notes: Wrap file read with security-scoped resource access lifecycle.
-
 ### BUG-003 (Priority: P2)
 - Status: Open
 - Title: Duplicate detection key is too coarse and can drop legitimate visits
@@ -100,3 +69,36 @@ Track confirmed issues here.
 - Expected Result: Reuse cached formatters.
 - Actual Result: New formatter instances are created for each parse attempt.
 - Notes: Cache fallback formatters as static properties to reduce allocation overhead.
+
+### BUG-001 (Priority: P1)
+- Status: ✅ Resolved
+- Title: SwiftData schema changes have no migration plan and risk upgrade failure/data loss
+- Area: Data Persistence
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: Critical
+- File/Reference: `CX Rugby Visitor App/VisitorSchema.swift`, `CX Rugby Visitor App/CX_Rugby_Visitor_AppApp.swift`, `CX Rugby Visitor App/VisitorRecord.swift`
+- Steps to Reproduce:
+1. Install an older build that used previous `VisitorRecord` fields.
+2. Create visitor data.
+3. Upgrade to the current build.
+- Expected Result: Existing data migrates safely.
+- Actual Result (Before Fix): No explicit migration/versioning was defined.
+- Resolution: Added explicit `VisitorSchemaV1` -> `VisitorSchemaV2` migration via `VisitorMigrationPlan`, switched app startup to a `ModelContainer` initialized with that migration plan, and aliased runtime `VisitorRecord` to the current schema model.
+- Verified: Project builds successfully after migration wiring.
+
+### BUG-002 (Priority: P2)
+- Status: ✅ Resolved
+- Title: CSV import may fail for external file providers due to missing security-scoped access
+- Area: Import/Restore
+- Reported By: Code review
+- Date Reported: 2026-04-22
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
+- Steps to Reproduce:
+1. Import CSV from Files app provider (e.g., iCloud/third-party provider).
+2. Attempt import on constrained file provider access.
+- Expected Result: Import reads file reliably.
+- Actual Result (Before Fix): `Data(contentsOf:)` was called directly without security-scoped resource lifecycle management.
+- Resolution: Added `readImportData(from:)` helper that calls `startAccessingSecurityScopedResource()`, reads data, and guarantees `stopAccessingSecurityScopedResource()` via `defer`.
+- Verified: Project builds successfully with updated import flow.

@@ -14,6 +14,7 @@ Track delivered features, planned enhancements, and future ideas.
 - CSV import/restore with preview, duplicate skipping, parse-failure reporting, and safe defaults.
 - About/settings with version/build display and operational toggles.
 
+
 ## New Ideas Backlog
 
 ### IDEA-001

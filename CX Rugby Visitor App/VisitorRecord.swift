@@ -1,43 +1,8 @@
 import Foundation
-import SwiftData
 
-@Model
-final class VisitorRecord {
-    var id: UUID
-    var firstName: String
-    var lastName: String
-    var company: String
-    var host: String
-    var carRegistration: String
-    var checkInAt: Date
-    var checkedOutAt: Date?
-    var checkoutMethod: String
-    var createdAt: Date
+typealias VisitorRecord = VisitorSchemaV2.VisitorRecord
 
-    init(
-        id: UUID = UUID(),
-        firstName: String,
-        lastName: String,
-        company: String,
-        host: String,
-        carRegistration: String = "",
-        checkInAt: Date = Date(),
-        checkedOutAt: Date? = nil,
-        checkoutMethod: String = "",
-        createdAt: Date = Date()
-    ) {
-        self.id = id
-        self.firstName = firstName
-        self.lastName = lastName
-        self.company = company
-        self.host = host
-        self.carRegistration = carRegistration
-        self.checkInAt = checkInAt
-        self.checkedOutAt = checkedOutAt
-        self.checkoutMethod = checkoutMethod
-        self.createdAt = createdAt
-    }
-
+extension VisitorRecord {
     var fullName: String {
         "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
     }
