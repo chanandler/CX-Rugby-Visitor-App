@@ -39,6 +39,7 @@ struct ContentView: View {
 
     @State private var registrationMessage = ""
     @State private var showRegistrationAlert = false
+    @State private var didAttemptRegistration = false
 
     @State private var leavingSearch = ""
     @State private var checkoutCandidateID: UUID?
@@ -218,17 +219,42 @@ struct ContentView: View {
                             .font(.title3.bold())
 
                         HStack(spacing: 12) {
-                            TextField("First name *", text: $firstName)
-                                .textFieldStyle(.roundedBorder)
-                            TextField("Last name *", text: $lastName)
-                                .textFieldStyle(.roundedBorder)
+                            VStack(alignment: .leading, spacing: 4) {
+                                TextField("First name *", text: $firstName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .overlay(validationBorder(isError: firstNameError != nil))
+                                if let firstNameError {
+                                    validationMessage(firstNameError)
+                                }
+                            }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                TextField("Last name *", text: $lastName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .overlay(validationBorder(isError: lastNameError != nil))
+                                if let lastNameError {
+                                    validationMessage(lastNameError)
+                                }
+                            }
                         }
 
-                        TextField("Company *", text: $company)
-                            .textFieldStyle(.roundedBorder)
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("Company *", text: $company)
+                                .textFieldStyle(.roundedBorder)
+                                .overlay(validationBorder(isError: companyError != nil))
+                            if let companyError {
+                                validationMessage(companyError)
+                            }
+                        }
 
-                        TextField("Visiting *", text: $host)
-                            .textFieldStyle(.roundedBorder)
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("Visiting *", text: $host)
+                                .textFieldStyle(.roundedBorder)
+                                .overlay(validationBorder(isError: hostError != nil))
+                            if let hostError {
+                                validationMessage(hostError)
+                            }
+                        }
 
                         TextField("Car registration (optional)", text: $carRegistration)
                             .textFieldStyle(.roundedBorder)
@@ -546,6 +572,41 @@ struct ContentView: View {
         return "Check out \(candidate.fullName)?"
     }
 
+    private var firstNameError: String? {
+        requiredFieldError(value: firstName, fieldLabel: "First name")
+    }
+
+    private var lastNameError: String? {
+        requiredFieldError(value: lastName, fieldLabel: "Last name")
+    }
+
+    private var companyError: String? {
+        requiredFieldError(value: company, fieldLabel: "Company")
+    }
+
+    private var hostError: String? {
+        requiredFieldError(value: host, fieldLabel: "Visiting")
+    }
+
+    private func requiredFieldError(value: String, fieldLabel: String) -> String? {
+        guard didAttemptRegistration else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "\(fieldLabel) is required." : nil
+    }
+
+    @ViewBuilder
+    private func validationBorder(isError: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 6)
+            .stroke(isError ? Color.red : Color.clear, lineWidth: 1)
+    }
+
+    @ViewBuilder
+    private func validationMessage(_ message: String) -> some View {
+        Text(message)
+            .font(.caption)
+            .foregroundStyle(.red)
+    }
+
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
         switch newPhase {
         case .active:
@@ -755,6 +816,7 @@ struct ContentView: View {
     }
 
     private func registerVisitor() {
+        didAttemptRegistration = true
         let cleanedFirstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedLastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanedCompany = company.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -785,6 +847,7 @@ struct ContentView: View {
         company = ""
         host = ""
         carRegistration = ""
+        didAttemptRegistration = false
 
         registrationMessage = "Visitor \(visitor.fullName) registered successfully."
         showRegistrationAlert = true
