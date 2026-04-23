@@ -206,10 +206,10 @@ struct ContentView: View {
                             )
 
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Cemex Rugby Cement Plant")
+                            Text("Welcome to Cemex Rugby")
                                 .font(.largeTitle.bold())
                                 .foregroundStyle(.white)
-                            Text("Welcome. Please register before entering the site.")
+                            Text("Please sign in below.")
                                 .font(.subheadline)
                                 .foregroundStyle(.white.opacity(0.92))
                         }
