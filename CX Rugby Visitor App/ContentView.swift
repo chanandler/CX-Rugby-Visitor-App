@@ -2189,7 +2189,14 @@ struct CapitalizedUIKitTextField: UIViewRepresentable {
         }
 
         @objc func textDidChange(_ textField: UITextField) {
-            text.wrappedValue = textField.text ?? ""
+            let rawText = textField.text ?? ""
+            let normalizedText = rawText.localizedCapitalized
+
+            if normalizedText != rawText {
+                textField.text = normalizedText
+            }
+
+            text.wrappedValue = normalizedText
         }
 
         func textFieldShouldReturn(_ textField: UITextField) -> Bool {
