@@ -189,124 +189,193 @@ struct ContentView: View {
     private var welcomeAndRegistrationTab: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    ZStack(alignment: .bottomLeading) {
+                VStack(spacing: 0) {
+                    ZStack {
                         Image("Rugby_Cement_Plant")
                             .resizable()
                             .scaledToFill()
-                            .frame(height: 220)
+                            .frame(height: 320)
                             .frame(maxWidth: .infinity)
                             .clipped()
+                            .overlay(Color.black.opacity(0.25))
                             .overlay(
                                 LinearGradient(
-                                    colors: [Color.clear, Color.black.opacity(0.68)],
+                                    colors: [cemexBlue.opacity(0.62), cemexBlue.opacity(0.86)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
 
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Welcome to Cemex Rugby")
-                                .font(.largeTitle.bold())
+                        VStack(spacing: 14) {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.white)
+                                .frame(width: 210, height: 84)
+                                .overlay(
+                                    Text("CEMEX")
+                                        .font(.system(size: 36, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(cemexBlue)
+                                )
+
+                            Text("Welcome to Cemex Rugby Cement Plant")
+                                .font(.system(size: 42, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
-                            Text("Please sign in below.")
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.92))
+                                .multilineTextAlignment(.center)
+
+                            Text("Please sign in below")
+                                .font(.system(size: 24, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.95))
                         }
-                        .padding(16)
+                        .padding(.horizontal, 24)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
-                    .padding(.top, 10)
+                    .frame(height: 320)
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Visitor Registration")
-                            .font(.title3.bold())
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 14) {
+                            registrationField(
+                                title: "FIRST NAME",
+                                placeholder: "First name",
+                                text: $firstName,
+                                isRequired: true,
+                                error: firstNameError
+                            )
 
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("First name *", text: $firstName)
-                                    .textFieldStyle(.roundedBorder)
-                                    .overlay(validationBorder(isError: firstNameError != nil))
-                                if let firstNameError {
-                                    validationMessage(firstNameError)
-                                }
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("Last name *", text: $lastName)
-                                    .textFieldStyle(.roundedBorder)
-                                    .overlay(validationBorder(isError: lastNameError != nil))
-                                if let lastNameError {
-                                    validationMessage(lastNameError)
-                                }
-                            }
+                            registrationField(
+                                title: "LAST NAME",
+                                placeholder: "Last name",
+                                text: $lastName,
+                                isRequired: true,
+                                error: lastNameError
+                            )
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            TextField("Company *", text: $company)
-                                .textFieldStyle(.roundedBorder)
-                                .overlay(validationBorder(isError: companyError != nil))
-                            if let companyError {
-                                validationMessage(companyError)
-                            }
+                        HStack(spacing: 14) {
+                            registrationField(
+                                title: "COMPANY",
+                                placeholder: "Company",
+                                text: $company,
+                                isRequired: true,
+                                error: companyError
+                            )
+
+                            registrationField(
+                                title: "VISITING",
+                                placeholder: "Who are you visiting",
+                                text: $host,
+                                isRequired: true,
+                                error: hostError
+                            )
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            TextField("Visiting *", text: $host)
-                                .textFieldStyle(.roundedBorder)
-                                .overlay(validationBorder(isError: hostError != nil))
-                            if let hostError {
-                                validationMessage(hostError)
-                            }
+                        HStack(spacing: 14) {
+                            registrationField(
+                                title: "CAR REGISTRATION",
+                                placeholder: "Optional",
+                                text: $carRegistration,
+                                isRequired: false,
+                                error: nil
+                            )
+                            Color.clear
+                                .frame(maxWidth: .infinity)
                         }
-
-                        TextField("Car registration (optional)", text: $carRegistration)
-                            .textFieldStyle(.roundedBorder)
 
                         Button {
                             registerVisitor()
                         } label: {
-                            Label("Register", systemImage: "checkmark.circle.fill")
-                                .font(.headline)
+                            Label("Register", systemImage: "person.badge.plus")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
+                                .padding(.vertical, 16)
+                                .background(cemexBlue, in: Capsule())
                         }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top, 6)
-                    }
-                    .padding()
-                    .background(.ultraThickMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                    )
+                        .buttonStyle(.plain)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Active Visitors: \(activeVisitors.count)")
-                            .font(.headline)
-                        Text("Total Records: \(visitors.count)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 14) {
+                            Button {
+                                selectedTab = .leaving
+                            } label: {
+                                Label("I'm Leaving", systemImage: "rectangle.portrait.and.arrow.right")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color.orange, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                selectedTab = .signInBook
+                            } label: {
+                                Label("Sign In Book", systemImage: "book.closed")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(cemexBlue)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color(red: 0.80, green: 0.84, blue: 0.90), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        HStack(spacing: 18) {
+                            Text("Active: \(activeVisitors.count)")
+                            Text("Total: \(visitors.count)")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(22)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .stroke(Color.black.opacity(0.05), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 32)
+                    .offset(y: -40)
                 }
-                .padding()
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, -20)
             }
-            .background(
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.15), Color.green.opacity(0.12), Color.white],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-            )
-            .navigationTitle("Welcome")
+            .scrollIndicators(.hidden)
+            .background(Color(red: 0.92, green: 0.93, blue: 0.96).ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbar(.hidden, for: .tabBar)
         }
+    }
+
+    private var cemexBlue: Color {
+        Color(red: 0.03, green: 0.23, blue: 0.61)
+    }
+
+    @ViewBuilder
+    private func registrationField(
+        title: String,
+        placeholder: String,
+        text: Binding<String>,
+        isRequired: Bool,
+        error: String?
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(isRequired ? "\(title) *" : title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+                .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(error == nil ? Color.black.opacity(0.05) : .red.opacity(0.8), lineWidth: 1)
+                )
+
+            if let error {
+                validationMessage(error)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var leavingTab: some View {
