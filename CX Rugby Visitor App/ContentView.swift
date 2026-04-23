@@ -272,7 +272,7 @@ struct ContentView: View {
                         HStack(spacing: 14) {
                             registrationField(
                                 title: "CAR REGISTRATION",
-                                placeholder: "Optional",
+                                placeholder: "Leave blank if not applicable",
                                 text: $carRegistration,
                                 isRequired: false,
                                 error: nil,
