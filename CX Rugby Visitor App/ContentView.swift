@@ -364,6 +364,7 @@ struct ContentView: View {
 
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.words)
+                .autocorrectionDisabled(false)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
                 .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
