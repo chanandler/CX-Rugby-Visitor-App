@@ -210,11 +210,13 @@ struct ContentView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(.white)
                                 .frame(width: 210, height: 84)
-                                .overlay(
-                                    Text("CEMEX")
-                                        .font(.system(size: 36, weight: .heavy, design: .rounded))
-                                        .foregroundStyle(cemexBlue)
-                                )
+                                .overlay {
+                                    Image("cemex_logo")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 16)
+                                }
 
                             Text("Welcome to Cemex Rugby Cement Plant")
                                 .font(.system(size: 42, weight: .bold, design: .rounded))
@@ -362,7 +364,6 @@ struct ContentView: View {
 
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.words)
-                .autocorrectionDisabled()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
                 .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
