@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 import Charts
+import UIKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -362,11 +363,9 @@ struct ContentView: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
 
-            TextField(placeholder, text: text)
-                .textInputAutocapitalization(.words)
-                .autocorrectionDisabled(false)
+            CapitalizedUIKitTextField(placeholder: placeholder, text: text)
+                .frame(height: 44)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 12)
                 .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -2148,6 +2147,56 @@ private enum VisitorAnalyticsService {
         formatter.dateFormat = "MMM"
         return formatter
     }()
+}
+
+struct CapitalizedUIKitTextField: UIViewRepresentable {
+    let placeholder: String
+    @Binding var text: String
+
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField(frame: .zero)
+        textField.delegate = context.coordinator
+        textField.borderStyle = .none
+        textField.placeholder = placeholder
+        textField.autocapitalizationType = .words
+        textField.autocorrectionType = .yes
+        textField.spellCheckingType = .yes
+        textField.keyboardType = .default
+        textField.returnKeyType = .done
+        textField.clearButtonMode = .whileEditing
+        textField.addTarget(context.coordinator, action: #selector(Coordinator.textDidChange(_:)), for: .editingChanged)
+        return textField
+    }
+
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        if uiView.text != text {
+            uiView.text = text
+        }
+        if uiView.placeholder != placeholder {
+            uiView.placeholder = placeholder
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        private var text: Binding<String>
+
+        init(text: Binding<String>) {
+            self.text = text
+        }
+
+        @objc func textDidChange(_ textField: UITextField) {
+            text.wrappedValue = textField.text ?? ""
+        }
+
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            textField.resignFirstResponder()
+            return true
+        }
+    }
 }
 
 #Preview {
