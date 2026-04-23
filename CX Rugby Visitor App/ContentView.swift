@@ -210,13 +210,13 @@ struct ContentView: View {
                         VStack(spacing: 14) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(.white)
-                                .frame(width: 210, height: 84)
+                                .frame(width: 228, height: 92)
                                 .overlay {
                                     Image("cemex_logo")
                                         .resizable()
                                         .scaledToFit()
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 16)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 6)
                                 }
 
                             Text("Welcome to Cemex Rugby Cement Plant")
