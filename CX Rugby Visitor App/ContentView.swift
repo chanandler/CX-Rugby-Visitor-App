@@ -275,7 +275,8 @@ struct ContentView: View {
                                 placeholder: "Optional",
                                 text: $carRegistration,
                                 isRequired: false,
-                                error: nil
+                                error: nil,
+                                normalization: .uppercase
                             )
                             Color.clear
                                 .frame(maxWidth: .infinity)
@@ -356,14 +357,15 @@ struct ContentView: View {
         placeholder: String,
         text: Binding<String>,
         isRequired: Bool,
-        error: String?
+        error: String?,
+        normalization: FieldTextNormalization = .titleCase
     ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(isRequired ? "\(title) *" : title)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
 
-            CapitalizedUIKitTextField(placeholder: placeholder, text: text)
+            CapitalizedUIKitTextField(placeholder: placeholder, text: text, normalization: normalization)
                 .frame(height: 44)
                 .padding(.horizontal, 12)
                 .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -2149,16 +2151,40 @@ private enum VisitorAnalyticsService {
     }()
 }
 
+enum FieldTextNormalization {
+    case titleCase
+    case uppercase
+
+    var autocapitalizationType: UITextAutocapitalizationType {
+        switch self {
+        case .titleCase:
+            return .words
+        case .uppercase:
+            return .allCharacters
+        }
+    }
+
+    func normalize(_ value: String) -> String {
+        switch self {
+        case .titleCase:
+            return value.localizedCapitalized
+        case .uppercase:
+            return value.uppercased()
+        }
+    }
+}
+
 struct CapitalizedUIKitTextField: UIViewRepresentable {
     let placeholder: String
     @Binding var text: String
+    let normalization: FieldTextNormalization
 
     func makeUIView(context: Context) -> UITextField {
         let textField = UITextField(frame: .zero)
         textField.delegate = context.coordinator
         textField.borderStyle = .none
         textField.placeholder = placeholder
-        textField.autocapitalizationType = .words
+        textField.autocapitalizationType = normalization.autocapitalizationType
         textField.autocorrectionType = .yes
         textField.spellCheckingType = .yes
         textField.keyboardType = .default
@@ -2178,19 +2204,21 @@ struct CapitalizedUIKitTextField: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text)
+        Coordinator(text: $text, normalization: normalization)
     }
 
     final class Coordinator: NSObject, UITextFieldDelegate {
         private var text: Binding<String>
+        private let normalization: FieldTextNormalization
 
-        init(text: Binding<String>) {
+        init(text: Binding<String>, normalization: FieldTextNormalization) {
             self.text = text
+            self.normalization = normalization
         }
 
         @objc func textDidChange(_ textField: UITextField) {
             let rawText = textField.text ?? ""
-            let normalizedText = rawText.localizedCapitalized
+            let normalizedText = normalization.normalize(rawText)
 
             if normalizedText != rawText {
                 textField.text = normalizedText
