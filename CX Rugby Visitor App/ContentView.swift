@@ -1129,9 +1129,13 @@ struct ContentView: View {
         guard isWeekday else { return }
 
         let startOfToday = calendar.startOfDay(for: now)
+        guard let startOfYesterday = calendar.date(byAdding: .day, value: -1, to: startOfToday) else {
+            return
+        }
+
         var changed = false
 
-        for visitor in activeVisitors where visitor.checkInAt < startOfToday {
+        for visitor in activeVisitors where visitor.checkInAt >= startOfYesterday && visitor.checkInAt < startOfToday {
             visitor.checkedOutAt = startOfToday
             visitor.checkoutMethod = "Auto Weekday Checkout"
             changed = true

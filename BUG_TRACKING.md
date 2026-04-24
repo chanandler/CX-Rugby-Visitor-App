@@ -11,19 +11,20 @@ Track confirmed issues here.
 ## Bugs
 
 ### BUG-009 (Priority: P2)
-- Status: `Open`
+- Status: ✅ Resolved
 - Title: Auto-checkout processes all pre-today active visitors, not only previous-day visitors
 - Area: Operations / Auto-checkout
 - Reported By: Code review
 - Date Reported: 2026-04-24
 - Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift` (auto-checkout logic around lines 1124-1137)
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
 - Steps to Reproduce:
 1. Create an active visitor record dated multiple days in the past (not just yesterday).
 2. Launch app on a weekday with auto-checkout enabled.
 - Expected Result: Only previous-day active visitors are auto-checked out.
-- Actual Result: Any active visitor with `checkInAt < startOfToday` is checked out.
-- Notes: This behavior conflicts with the settings label "Auto-checkout previous-day active visitors (weekdays)" and can unexpectedly close older in-progress records.
+- Actual Result (Before Fix): Any active visitor with `checkInAt < startOfToday` was checked out.
+- Resolution: Updated `autoCheckoutPreviousDayActiveVisitors()` to compute `startOfYesterday` and only auto-check out active visitors where `checkInAt` is within `[startOfYesterday, startOfToday)`.
+- Verified: Project builds successfully with corrected date window logic.
 
 ### BUG-010 (Priority: P2)
 - Status: `Open`
