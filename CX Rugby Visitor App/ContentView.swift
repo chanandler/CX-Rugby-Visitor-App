@@ -1013,13 +1013,14 @@ struct ContentView: View {
         didAttemptRegistration = false
 
         registrationMessage = "Visitor \(visitor.fullName) registered successfully."
-        showThankYouPopup = true
+        showRegistrationAlert = true
     }
 
     private func confirmCheckoutCandidate() {
         guard let candidate = visitor(with: checkoutCandidateID) else { return }
         checkout(visitor: candidate, method: "I'm Leaving")
         checkoutCandidateID = nil
+        showThankYouPopup = true
     }
 
     private func checkout(visitor: VisitorRecord, method: String) {
