@@ -218,7 +218,7 @@ struct ContentView: View {
                                         .padding(.vertical, 6)
                                 }
 
-                            Text("Welcome to Cemex Rugby Cement Plant")
+                            Text("Welcome to Rugby Cement Plant")
                                 .font(.system(size: 42, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
