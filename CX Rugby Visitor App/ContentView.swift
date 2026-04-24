@@ -55,7 +55,6 @@ struct ContentView: View {
     @State private var showSettingsAlert = false
     @State private var rollCallMessage = ""
     @State private var showRollCallAlert = false
-    @State private var rollCallSessionConfirmedIDs: Set<UUID> = []
 
     @State private var showingImporter = false
     @State private var importPreview: ImportPreview?
@@ -459,6 +458,12 @@ struct ContentView: View {
                                 Text("Out: \(visitor.checkedOutAt?.formatted(date: .abbreviated, time: .shortened) ?? "Active")")
                                     .font(.caption)
                                     .foregroundStyle(visitor.isActive ? .green : .secondary)
+
+                                if !visitor.isActive, visitor.checkoutMethod == "Fire Roll Call" {
+                                    Text("Signed out via Fire Roll Call")
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                }
                             }
                             .padding(.vertical, 2)
                         }
@@ -674,10 +679,13 @@ struct ContentView: View {
     }
 
     private var rollCallConfirmedOutVisitors: [VisitorRecord] {
+        let calendar = Calendar.current
+
         return visitors
             .filter { visitor in
-                guard visitor.checkedOutAt != nil else { return false }
-                return rollCallSessionConfirmedIDs.contains(visitor.id) || visitor.checkoutMethod == "Fire Roll Call"
+                guard let checkedOutAt = visitor.checkedOutAt else { return false }
+                guard visitor.checkoutMethod == "Fire Roll Call" else { return false }
+                return calendar.isDateInToday(checkedOutAt)
             }
             .sorted { lhs, rhs in
                 (lhs.checkedOutAt ?? .distantPast) > (rhs.checkedOutAt ?? .distantPast)
@@ -989,7 +997,6 @@ struct ContentView: View {
         guard visitor.isActive else { return }
         visitor.checkedOutAt = Date()
         visitor.checkoutMethod = "Fire Roll Call"
-        rollCallSessionConfirmedIDs.insert(visitor.id)
         saveContext()
     }
 
@@ -1005,7 +1012,6 @@ struct ContentView: View {
         for visitor in visitorsToCheckout where visitor.isActive {
             visitor.checkedOutAt = now
             visitor.checkoutMethod = "Fire Roll Call"
-            rollCallSessionConfirmedIDs.insert(visitor.id)
         }
         saveContext()
         rollCallMessage = "Confirmed out \(visitorsToCheckout.count) visitor(s)."
