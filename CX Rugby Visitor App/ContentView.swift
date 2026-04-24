@@ -65,7 +65,7 @@ struct ContentView: View {
         ZStack(alignment: .bottomLeading) {
             currentTabContent
 
-            settingsLauncherButton
+            bottomLauncherButtons
                 .padding(.leading, 16)
                 .padding(.bottom, 14)
 
@@ -667,19 +667,34 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.2), value: showThankYouPopup)
     }
 
-    private var settingsLauncherButton: some View {
-        Button {
-            openSettings()
-        } label: {
-            Image(systemName: "gearshape.fill")
-                .font(.title3)
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48)
-                .background(Color.black.opacity(0.65), in: Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1))
-                .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+    private var bottomLauncherButtons: some View {
+        HStack(spacing: 10) {
+            Button {
+                openSettings()
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .frame(width: 48, height: 48)
+                    .background(Color.black.opacity(0.65), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+            }
+            .accessibilityLabel("Open Settings")
+
+            Button {
+                openFireRollCall()
+            } label: {
+                Image(systemName: "flame.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                    .frame(width: 48, height: 48)
+                    .background(Color.orange.opacity(0.9), in: Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.65), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+            }
+            .accessibilityLabel("Open Fire Roll Call")
         }
-        .accessibilityLabel("Open Settings")
     }
 
     private var appVersion: String {
@@ -886,6 +901,11 @@ struct ContentView: View {
         pinInput = ""
         pinErrorMessage = ""
         showPinEntrySheet = true
+    }
+
+    private func openFireRollCall() {
+        markUserActivity()
+        selectedTab = .fireRollCall
     }
 
     private func updatePin() {
