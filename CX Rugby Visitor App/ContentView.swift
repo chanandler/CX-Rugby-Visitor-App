@@ -129,7 +129,7 @@ struct ContentView: View {
         } message: {
             Text(registrationMessage)
         }
-        .alert("Confirm Check-Out", isPresented: $showCheckoutConfirmation) {
+        .alert("Confirm Leaving", isPresented: $showCheckoutConfirmation) {
             Button("Confirm") {
                 confirmCheckoutCandidate()
             }
