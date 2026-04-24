@@ -795,7 +795,7 @@ struct ContentView: View {
         }
 
         if pinInput == storedPin {
-            unlockedProtectedAreas.insert(pendingProtectedArea)
+            unlockedProtectedAreas = [.signInBook, .fireRollCall, .settings]
             self.pendingProtectedArea = nil
             pinInput = ""
             pinErrorMessage = ""
