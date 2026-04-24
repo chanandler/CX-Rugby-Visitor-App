@@ -647,12 +647,16 @@ struct ContentView: View {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
                     Text("Thank you for visiting.")
+                        .lineLimit(1)
                     Text("Have a safe journey")
+                        .lineLimit(1)
                 }
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .minimumScaleFactor(0.9)
                 .foregroundStyle(.black)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.horizontal, 20)
             }
             .padding(.vertical, 30)
             .frame(width: 430, height: 300)
