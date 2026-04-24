@@ -10,6 +10,36 @@ Track confirmed issues here.
 
 ## Bugs
 
+### BUG-009 (Priority: P2)
+- Status: `Open`
+- Title: Auto-checkout processes all pre-today active visitors, not only previous-day visitors
+- Area: Operations / Auto-checkout
+- Reported By: Code review
+- Date Reported: 2026-04-24
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift` (auto-checkout logic around lines 1124-1137)
+- Steps to Reproduce:
+1. Create an active visitor record dated multiple days in the past (not just yesterday).
+2. Launch app on a weekday with auto-checkout enabled.
+- Expected Result: Only previous-day active visitors are auto-checked out.
+- Actual Result: Any active visitor with `checkInAt < startOfToday` is checked out.
+- Notes: This behavior conflicts with the settings label "Auto-checkout previous-day active visitors (weekdays)" and can unexpectedly close older in-progress records.
+
+### BUG-010 (Priority: P2)
+- Status: `Open`
+- Title: CSV import rejects valid ISO8601 timestamps without fractional seconds
+- Area: Import/Restore
+- Reported By: Code review
+- Date Reported: 2026-04-24
+- Severity: High
+- File/Reference: `CX Rugby Visitor App/ContentView.swift` (`VisitorCSVService.isoFormatter` and date parsing around lines 1405-1408, 1602-1609)
+- Steps to Reproduce:
+1. Import CSV with `check_in_at` formatted like `2026-04-24T12:34:56Z`.
+2. Open import preview.
+- Expected Result: Timestamp parses successfully as a valid ISO8601 value.
+- Actual Result: Row fails with `Invalid date for check_in_at...`.
+- Notes: `ISO8601DateFormatter` is configured with `.withFractionalSeconds`, so non-fractional ISO strings are rejected. Confirmed via `ExecuteSnippet` run.
+
 ### BUG-001 (Priority: P1)
 - Status: ✅ Resolved
 - Title: SwiftData schema changes have no migration plan and risk upgrade failure/data loss
