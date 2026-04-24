@@ -508,6 +508,15 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
+                    Button("Back to Register <-") {
+                        selectedTab = .register
+                    }
+                    .buttonStyle(.plain)
+                    .font(.headline)
+                    .foregroundStyle(cemexBlue)
+                }
+
+                Section {
                     Text("Use this for emergency accounting. Confirm out when each person is accounted for.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
