@@ -42,6 +42,7 @@ struct ContentView: View {
     @State private var registrationMessage = ""
     @State private var showRegistrationAlert = false
     @State private var showThankYouPopup = false
+    @State private var thankYouPopupToken = UUID()
     @State private var didAttemptRegistration = false
 
     @State private var leavingSearch = ""
@@ -389,6 +390,15 @@ struct ContentView: View {
     private var leavingTab: some View {
         NavigationStack {
             List {
+                Section {
+                    Button("Back to Register <-") {
+                        selectedTab = .register
+                    }
+                    .buttonStyle(.plain)
+                    .font(.headline)
+                    .foregroundStyle(cemexBlue)
+                }
+
                 Section("Search Active Visitors") {
                     TextField("Search by name, company or host", text: $leavingSearch)
                 }
@@ -420,7 +430,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("I'm Leaving")
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -641,15 +651,6 @@ struct ContentView: View {
                     .foregroundStyle(.black)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
-
-                Button("Done") {
-                    showThankYouPopup = false
-                }
-                .font(.headline)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 10)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .foregroundStyle(.black)
             }
             .padding(.vertical, 30)
             .frame(width: 430, height: 300)
@@ -1020,7 +1021,7 @@ struct ContentView: View {
         guard let candidate = visitor(with: checkoutCandidateID) else { return }
         checkout(visitor: candidate, method: "I'm Leaving")
         checkoutCandidateID = nil
-        showThankYouPopup = true
+        presentThankYouAndReturnToRegister()
     }
 
     private func checkout(visitor: VisitorRecord, method: String) {
@@ -1028,6 +1029,19 @@ struct ContentView: View {
         visitor.checkedOutAt = Date()
         visitor.checkoutMethod = method
         saveContext()
+    }
+
+    private func presentThankYouAndReturnToRegister() {
+        thankYouPopupToken = UUID()
+        let token = thankYouPopupToken
+        showThankYouPopup = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            guard thankYouPopupToken == token else { return }
+            showThankYouPopup = false
+            selectedTab = .register
+            leavingSearch = ""
+        }
     }
 
     private func checkoutFromRollCall(_ visitor: VisitorRecord) {
