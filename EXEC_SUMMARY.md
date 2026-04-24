@@ -1,76 +1,57 @@
 # Executive Summary: Cemex Rugby Cement Plant Visitor App
 
 ## Purpose
-The app is an iPad-based visitor management solution for reception use at Cemex Rugby Cement Plant. It replaces paper-based sign-in with a structured digital process that supports operational control, emergency accountability, and audit/compliance reporting.
+This app is an iPad-based visitor management solution for reception at Cemex Rugby Cement Plant. It replaces paper sign-in/out with a controlled digital process that improves safety accountability, operational consistency, and reporting readiness.
 
-## What The App Does
-- Registers visitors with required details (first name, last name, company, and who they are visiting) and optional car registration.
-- Tracks active visitors currently on site.
-- Supports visitor check-out through multiple workflows.
-- Maintains a Sign In Book view for active, archived, and all records.
-- Provides emergency roll-call tools for fire alarm accounting.
-- Exports and imports visitor records via CSV.
-- Performs automated maintenance tasks (auto-checkout and backups).
-- Protects sensitive operational areas behind a PIN.
+## Current Scope
+- Digital visitor registration with required fields:
+  - First name
+  - Last name
+  - Company
+  - Visiting
+- Optional car registration capture.
+- Visitor check-out via:
+  - "I'm Leaving" search + confirm workflow
+  - Fire Roll Call confirm-out actions
+- Sign In Book with Active, Archived, and All views.
+- Fire Alarm Roll Call emergency accounting view, including:
+  - Individual confirm-out
+  - Confirm all out
+  - Session visibility of confirmed-out visitors
+- CSV export for reporting/compliance.
+- CSV import/restore with:
+  - Preview before apply
+  - Duplicate skipping
+  - Parse-failure reporting
+  - Safe defaults for missing columns
+  - Support for ISO timestamps with and without fractional seconds
+- Settings and About management, including version/build display.
+- Analytics dashboard (Day / Week / Month / Year views).
 
-## App Flow
-1. Launch
-- User opens the app to a branded welcome/register experience with the site image and registration form.
-
-2. Visitor Registration
-- Reception enters required visitor details and selects Register.
-- A new record is stored in SwiftData as active (checked-in).
-- Confirmation message is displayed.
-
-3. Visitor Departure
-- Visitor can be checked out from "I'm Leaving" via search + confirmation.
-- Visitor can also be checked out from management screens (e.g., roll call).
-
-4. Sign In Book / History
-- Reception opens Sign In Book and switches between Active, Archived, and All views.
-- Data can be exported to CSV for reporting/compliance.
-
-5. Emergency Roll Call
-- Fire Roll Call screen shows active visitors.
-- Users can confirm individual visitors out or confirm all out.
-
-6. Settings & Administration
-- Settings are opened via a separate bottom-left cog button.
-- Access requires PIN authentication.
-- From Settings, users manage operational toggles, PIN, import/restore, backup, and app information.
-
-## Security & Access Control
-- PIN-protected areas:
+## Security and Access Control
+- PIN protection is enforced for:
   - Sign In Book
   - Fire Roll Call
   - Settings
-- Settings access uses a separate cog launcher and still enforces PIN.
-- Session unlock is temporary and supports manual lock.
-- Auto-relock triggers:
-  - After 5 minutes of app inactivity.
-  - After app returns from background/inactive if away for 5+ minutes.
+- PIN is stored using Keychain service logic.
+- Failed PIN attempts trigger escalating lockout windows.
+- Auto-relock behavior:
+  - After 5 minutes of inactivity
+  - After returning from background/inactive when away for 5+ minutes
+- Settings remain intentionally separated behind a dedicated bottom-left cog launcher.
 
-## Data & Reporting
-- Data store: SwiftData visitor records.
-- CSV export: creates shareable CSV for compliance/reporting.
-- CSV import/restore:
-  - Preview before import.
-  - Duplicate skipping.
-  - Parse failure reporting.
-  - Safe defaults for missing/partial fields.
+## Data, Continuity, and Resilience
+- Persistence uses SwiftData with migration plan support.
+- Automatic weekday auto-checkout is implemented for previous-day active visitors only.
+- Automatic daily backups write to `Documents/VisitorBackups` with retention cleanup.
+- Manual backup generation and sharing is available.
 
-## Business Continuity Features
-- Weekday auto-checkout:
-  - Automatically checks out prior-day active visitors.
-- Daily automatic backups:
-  - Writes backup files to Documents/VisitorBackups.
-  - Applies retention cleanup based on configured retention days.
-- Manual backup creation/export also available.
+## UX and Platform Notes
+- Designed for iPad front-desk use.
+- Branded welcome/registration screen includes:
+  - Site photo hero background
+  - Cemex logo treatment
+  - Front-and-centre registration card
 
-## Current Platform & UX Notes
-- Targeted for iPad usage.
-- Settings moved off the tab bar to a dedicated bottom-left cog action.
-- Front-page branding reflects Cemex Rugby Cement Plant.
-
-## Operational Outcomes
-The app provides a controlled, auditable, and resilient visitor process that improves reception efficiency, enhances site safety response capability, and supports compliance reporting requirements.
+## Operational Outcome
+The app provides a practical, auditable visitor control system that supports reception throughput, emergency response readiness, and compliance reporting, while reducing manual administrative overhead.
