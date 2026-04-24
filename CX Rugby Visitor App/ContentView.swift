@@ -63,30 +63,34 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            TabView(selection: $selectedTab) {
-                welcomeAndRegistrationTab
-                    .tabItem {
-                        Label("Register", systemImage: "person.badge.plus")
-                    }
-                    .tag(AppTab.register)
-
+            if selectedTab == .leaving {
                 leavingTab
-                    .tabItem {
-                        Label("I'm Leaving", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                    .tag(AppTab.leaving)
+            } else {
+                TabView(selection: $selectedTab) {
+                    welcomeAndRegistrationTab
+                        .tabItem {
+                            Label("Register", systemImage: "person.badge.plus")
+                        }
+                        .tag(AppTab.register)
 
-                signInBookTab
-                    .tabItem {
-                        Label("Sign In Book", systemImage: "book.closed")
-                    }
-                    .tag(AppTab.signInBook)
+                    leavingTab
+                        .tabItem {
+                            Label("I'm Leaving", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                        .tag(AppTab.leaving)
 
-                fireRollCallTab
-                    .tabItem {
-                        Label("Fire Roll Call", systemImage: "flame")
-                    }
-                    .tag(AppTab.fireRollCall)
+                    signInBookTab
+                        .tabItem {
+                            Label("Sign In Book", systemImage: "book.closed")
+                        }
+                        .tag(AppTab.signInBook)
+
+                    fireRollCallTab
+                        .tabItem {
+                            Label("Fire Roll Call", systemImage: "flame")
+                        }
+                        .tag(AppTab.fireRollCall)
+                }
             }
 
             settingsLauncherButton
@@ -349,6 +353,7 @@ struct ContentView: View {
             .scrollIndicators(.hidden)
             .background(Color(red: 0.92, green: 0.93, blue: 0.96).ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
+            .toolbar(.hidden, for: .tabBar)
             .toolbar(.hidden, for: .tabBar)
         }
     }
@@ -730,10 +735,7 @@ struct ContentView: View {
     }
 
     private var checkoutConfirmationMessage: String {
-        guard let candidate = visitor(with: checkoutCandidateID) else {
-            return "Confirm this visitor has left the site."
-        }
-        return "Check out \(candidate.fullName)?"
+        "Tap confirm if you are leaving."
     }
 
     private var firstNameError: String? {
