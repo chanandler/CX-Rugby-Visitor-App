@@ -63,35 +63,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if selectedTab == .leaving {
-                leavingTab
-            } else {
-                TabView(selection: $selectedTab) {
-                    welcomeAndRegistrationTab
-                        .tabItem {
-                            Label("Register", systemImage: "person.badge.plus")
-                        }
-                        .tag(AppTab.register)
-
-                    leavingTab
-                        .tabItem {
-                            Label("I'm Leaving", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
-                        .tag(AppTab.leaving)
-
-                    signInBookTab
-                        .tabItem {
-                            Label("Sign In Book", systemImage: "book.closed")
-                        }
-                        .tag(AppTab.signInBook)
-
-                    fireRollCallTab
-                        .tabItem {
-                            Label("Fire Roll Call", systemImage: "flame")
-                        }
-                        .tag(AppTab.fireRollCall)
-                }
-            }
+            currentTabContent
 
             settingsLauncherButton
                 .padding(.leading, 16)
@@ -194,6 +166,20 @@ struct ContentView: View {
             } onCancel: {
                 importPreview = nil
             }
+        }
+    }
+
+    @ViewBuilder
+    private var currentTabContent: some View {
+        switch selectedTab {
+        case .register:
+            welcomeAndRegistrationTab
+        case .leaving:
+            leavingTab
+        case .signInBook:
+            signInBookTab
+        case .fireRollCall:
+            fireRollCallTab
         }
     }
 
@@ -353,7 +339,6 @@ struct ContentView: View {
             .scrollIndicators(.hidden)
             .background(Color(red: 0.92, green: 0.93, blue: 0.96).ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .toolbar(.hidden, for: .tabBar)
             .toolbar(.hidden, for: .tabBar)
         }
     }
