@@ -655,7 +655,7 @@ struct ContentView: View {
 
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
-                    Text("Thank you for visiting.")
+                    Text("Thank you for visiting")
                         .lineLimit(1)
                     Text("Have a safe journey")
                         .lineLimit(1)
