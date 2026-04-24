@@ -41,6 +41,7 @@ struct ContentView: View {
 
     @State private var registrationMessage = ""
     @State private var showRegistrationAlert = false
+    @State private var showThankYouPopup = false
     @State private var didAttemptRegistration = false
 
     @State private var leavingSearch = ""
@@ -90,6 +91,11 @@ struct ContentView: View {
             settingsLauncherButton
                 .padding(.leading, 16)
                 .padding(.bottom, 14)
+
+            if showThankYouPopup {
+                thankYouPopupView
+                    .zIndex(1)
+            }
         }
         .onAppear {
             markUserActivity()
@@ -624,6 +630,36 @@ struct ContentView: View {
         }
     }
 
+    private var thankYouPopupView: some View {
+        ZStack {
+            Color.black.opacity(0.15)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Text("Thank you for visiting. Have a safe journey")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(.black)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+
+                Button("Done") {
+                    showThankYouPopup = false
+                }
+                .font(.headline)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 10)
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .foregroundStyle(.black)
+            }
+            .padding(.vertical, 30)
+            .frame(width: 430, height: 300)
+            .background(Color(red: 0.23, green: 0.77, blue: 0.35), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(color: .black.opacity(0.24), radius: 12, y: 6)
+        }
+        .transition(.opacity.combined(with: .scale))
+        .animation(.easeInOut(duration: 0.2), value: showThankYouPopup)
+    }
+
     private var settingsLauncherButton: some View {
         Button {
             openSettings()
@@ -977,7 +1013,7 @@ struct ContentView: View {
         didAttemptRegistration = false
 
         registrationMessage = "Visitor \(visitor.fullName) registered successfully."
-        showRegistrationAlert = true
+        showThankYouPopup = true
     }
 
     private func confirmCheckoutCandidate() {
