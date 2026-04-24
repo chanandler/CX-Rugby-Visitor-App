@@ -636,11 +636,14 @@ struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
-                Text("Thank you for visiting. Have a safe journey")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .foregroundStyle(.black)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                VStack(spacing: 8) {
+                    Text("Thank you for visiting.")
+                    Text("Have a safe journey")
+                }
+                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .foregroundStyle(.black)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
             }
             .padding(.vertical, 30)
             .frame(width: 430, height: 300)
