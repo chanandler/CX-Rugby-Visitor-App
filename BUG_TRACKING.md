@@ -27,19 +27,20 @@ Track confirmed issues here.
 - Verified: Project builds successfully with corrected date window logic.
 
 ### BUG-010 (Priority: P2)
-- Status: `Open`
+- Status: ✅ Resolved
 - Title: CSV import rejects valid ISO8601 timestamps without fractional seconds
 - Area: Import/Restore
 - Reported By: Code review
 - Date Reported: 2026-04-24
 - Severity: High
-- File/Reference: `CX Rugby Visitor App/ContentView.swift` (`VisitorCSVService.isoFormatter` and date parsing around lines 1405-1408, 1602-1609)
+- File/Reference: `CX Rugby Visitor App/ContentView.swift`
 - Steps to Reproduce:
 1. Import CSV with `check_in_at` formatted like `2026-04-24T12:34:56Z`.
 2. Open import preview.
 - Expected Result: Timestamp parses successfully as a valid ISO8601 value.
-- Actual Result: Row fails with `Invalid date for check_in_at...`.
-- Notes: `ISO8601DateFormatter` is configured with `.withFractionalSeconds`, so non-fractional ISO strings are rejected. Confirmed via `ExecuteSnippet` run.
+- Actual Result (Before Fix): Row failed with `Invalid date for check_in_at...`.
+- Resolution: Added `isoFormatterWithoutFractionalSeconds` and updated `parseDateString(_:)` to attempt parsing with both ISO8601 formatter variants before falling back to `DateFormatter` patterns.
+- Verified: Build succeeds and `ExecuteSnippet` confirms `rowsReady: 1`, `failures: 0` for `2026-04-24T12:34:56Z`.
 
 ### BUG-001 (Priority: P1)
 - Status: ✅ Resolved

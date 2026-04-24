@@ -1412,6 +1412,12 @@ private enum VisitorCSVService {
         return formatter
     }()
 
+    static let isoFormatterWithoutFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
     static let dayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -1606,6 +1612,10 @@ private enum VisitorCSVService {
     private static func parseDateString(_ value: String) -> Date? {
         if let iso = isoFormatter.date(from: value) {
             return iso
+        }
+
+        if let isoWithoutFractionalSeconds = isoFormatterWithoutFractionalSeconds.date(from: value) {
+            return isoWithoutFractionalSeconds
         }
 
         for formatter in fallbackDateFormatters {
