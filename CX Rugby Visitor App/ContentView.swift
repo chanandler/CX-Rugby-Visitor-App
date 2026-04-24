@@ -428,6 +428,15 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
+                    Button("Back to Register <-") {
+                        selectedTab = .register
+                    }
+                    .buttonStyle(.plain)
+                    .font(.headline)
+                    .foregroundStyle(cemexBlue)
+                }
+
+                Section {
                     HStack(spacing: 8) {
                         ForEach(SignInScope.allCases, id: \.self) { scope in
                             Button(scope.rawValue) {
