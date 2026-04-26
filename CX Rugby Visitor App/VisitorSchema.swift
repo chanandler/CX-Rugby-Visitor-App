@@ -110,3 +110,4 @@ enum VisitorMigrationPlan: SchemaMigrationPlan {
         ]
     }
 }
+

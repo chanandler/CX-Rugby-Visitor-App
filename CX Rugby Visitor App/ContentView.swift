@@ -1045,7 +1045,7 @@ struct ContentView: View {
         carRegistration = ""
         didAttemptRegistration = false
 
-        registrationMessage = "Visitor \(visitor.fullName) registered successfully."
+        registrationMessage = "Thank you for registering.\n\n\(visitor.fullName): Your information has been recorded successfully.\n\nThe information collected is for safety and security purposes and all personal details will be stored in accordance with the Cemex Privacy Policy available at cemex.co.uk"
         showRegistrationAlert = true
     }
 
