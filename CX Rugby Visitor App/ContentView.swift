@@ -43,6 +43,7 @@ struct ContentView: View {
     @State private var showRegistrationAlert = false
     @State private var showThankYouPopup = false
     @State private var thankYouPopupToken = UUID()
+    @State private var thankYouCountdownSeconds = 5
     @State private var didAttemptRegistration = false
 
     @State private var leavingSearch = ""
@@ -670,6 +671,13 @@ struct ContentView: View {
             .padding(.vertical, 30)
             .frame(width: 430, height: 300)
             .background(Color(red: 0.23, green: 0.77, blue: 0.35), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(alignment: .bottomTrailing) {
+                Text("\(thankYouCountdownSeconds)s")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.black.opacity(0.8))
+                    .padding(.trailing, 14)
+                    .padding(.bottom, 10)
+            }
             .shadow(color: .black.opacity(0.24), radius: 12, y: 6)
         }
         .transition(.opacity.combined(with: .scale))
@@ -1066,13 +1074,30 @@ struct ContentView: View {
     private func presentThankYouAndReturnToRegister() {
         thankYouPopupToken = UUID()
         let token = thankYouPopupToken
+        thankYouCountdownSeconds = 5
         showThankYouPopup = true
+
+        scheduleThankYouCountdownTick(for: token)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             guard thankYouPopupToken == token else { return }
             showThankYouPopup = false
+            thankYouCountdownSeconds = 0
             selectedTab = .register
             leavingSearch = ""
+        }
+    }
+
+    private func scheduleThankYouCountdownTick(for token: UUID) {
+        guard thankYouCountdownSeconds > 0 else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            guard thankYouPopupToken == token, showThankYouPopup else { return }
+            thankYouCountdownSeconds = max(0, thankYouCountdownSeconds - 1)
+
+            if thankYouCountdownSeconds > 0 {
+                scheduleThankYouCountdownTick(for: token)
+            }
         }
     }
 
