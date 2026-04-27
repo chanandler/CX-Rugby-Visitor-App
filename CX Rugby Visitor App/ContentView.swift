@@ -90,6 +90,10 @@ struct ContentView: View {
             markUserActivity()
             handleTabSelectionChange(oldValue: oldValue, newValue: newValue)
         }
+        .onChange(of: showPinSetupSheet) { _, isPresented in
+            guard isPresented, !requiresMandatoryPinChange else { return }
+            pinSetupErrorMessage = ""
+        }
         .task {
             await monitorInactivity()
         }
@@ -981,6 +985,9 @@ struct ContentView: View {
 
     private func ensurePinConfigured() -> Bool {
         if storedPin == nil || requiresMandatoryPinChange {
+            if !requiresMandatoryPinChange {
+                pinSetupErrorMessage = ""
+            }
             showPinSetupSheet = true
             return false
         }
@@ -1062,6 +1069,7 @@ struct ContentView: View {
         }
 
         requiresMandatoryPinChange = false
+        pinSetupErrorMessage = ""
     }
 
     private func performAdminPinReset() {

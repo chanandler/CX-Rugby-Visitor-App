@@ -21,7 +21,7 @@ Track confirmed issues here.
 - Recommended fix: Make `saveContext` throw (or return `Bool`) and gate all success UI/cleanup paths on successful persistence only.
 
 ### BUG-012 (Priority: P3)
-- Status: Open
+- Status: ✅ Resolved
 - Title: PIN setup error message can persist across later setup sessions after policy state changes
 - Evidence:
   - Policy re-evaluation can force setup and set `pinSetupErrorMessage` (`ContentView.swift:1057`).
