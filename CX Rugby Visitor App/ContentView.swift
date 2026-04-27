@@ -1473,6 +1473,18 @@ private struct PinSetupSheet: View {
         (4...8).contains(sanitizedPinInput.count) && (4...8).contains(sanitizedConfirmPinInput.count)
     }
 
+    private let disallowedDefaultPins: Set<String> = ["0000", "1111", "1234", "9999"]
+
+    private var blockedPinMessage: String? {
+        guard (4...8).contains(sanitizedPinInput.count) else {
+            return nil
+        }
+        if disallowedDefaultPins.contains(sanitizedPinInput) {
+            return "This PIN is too common. Choose a less predictable PIN."
+        }
+        return nil
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -1506,6 +1518,12 @@ private struct PinSetupSheet: View {
                                 confirmPinInput = truncated
                             }
                         }
+
+                    if let blockedPinMessage {
+                        Text(blockedPinMessage)
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
 
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
