@@ -11,7 +11,7 @@ Track confirmed issues here.
 ## Bugs
 
 ### BUG-011 (Priority: P1)
-- Status: Open
+- Status: ✅ Resolved
 - Title: User-facing success flows proceed even when `modelContext.save()` fails
 - Evidence:
   - `saveContext()` catches errors internally and does not return failure state (`ContentView.swift:1333`).

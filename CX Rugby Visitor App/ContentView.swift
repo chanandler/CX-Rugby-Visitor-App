@@ -1114,7 +1114,9 @@ struct ContentView: View {
         )
 
         modelContext.insert(visitor)
-        saveContext()
+        guard saveContext() else {
+            return
+        }
 
         firstName = ""
         lastName = ""
@@ -1129,16 +1131,25 @@ struct ContentView: View {
 
     private func confirmCheckoutCandidate() {
         guard let candidate = visitor(with: checkoutCandidateID) else { return }
-        checkout(visitor: candidate, method: "I'm Leaving")
+        guard checkout(visitor: candidate, method: "I'm Leaving") else {
+            return
+        }
         checkoutCandidateID = nil
         presentThankYouAndReturnToRegister()
     }
 
-    private func checkout(visitor: VisitorRecord, method: String) {
-        guard visitor.isActive else { return }
+    private func checkout(visitor: VisitorRecord, method: String) -> Bool {
+        guard visitor.isActive else { return false }
+        let originalCheckedOutAt = visitor.checkedOutAt
+        let originalCheckoutMethod = visitor.checkoutMethod
         visitor.checkedOutAt = Date()
         visitor.checkoutMethod = method
-        saveContext()
+        guard saveContext() else {
+            visitor.checkedOutAt = originalCheckedOutAt
+            visitor.checkoutMethod = originalCheckoutMethod
+            return false
+        }
+        return true
     }
 
     private func presentThankYouAndReturnToRegister() {
@@ -1173,9 +1184,15 @@ struct ContentView: View {
 
     private func checkoutFromRollCall(_ visitor: VisitorRecord) {
         guard visitor.isActive else { return }
+        let originalCheckedOutAt = visitor.checkedOutAt
+        let originalCheckoutMethod = visitor.checkoutMethod
         visitor.checkedOutAt = Date()
         visitor.checkoutMethod = "Fire Roll Call"
-        saveContext()
+        guard saveContext() else {
+            visitor.checkedOutAt = originalCheckedOutAt
+            visitor.checkoutMethod = originalCheckoutMethod
+            return
+        }
     }
 
     private func confirmAllOutFromRollCall() {
@@ -1187,11 +1204,21 @@ struct ContentView: View {
         }
 
         let now = Date()
+        var originalStateByID: [UUID: (checkedOutAt: Date?, checkoutMethod: String)] = [:]
         for visitor in visitorsToCheckout where visitor.isActive {
+            originalStateByID[visitor.id] = (visitor.checkedOutAt, visitor.checkoutMethod)
             visitor.checkedOutAt = now
             visitor.checkoutMethod = "Fire Roll Call"
         }
-        saveContext()
+        guard saveContext() else {
+            for visitor in visitorsToCheckout {
+                if let original = originalStateByID[visitor.id] {
+                    visitor.checkedOutAt = original.checkedOutAt
+                    visitor.checkoutMethod = original.checkoutMethod
+                }
+            }
+            return
+        }
         rollCallMessage = "Confirmed out \(visitorsToCheckout.count) visitor(s)."
         showRollCallAlert = true
     }
@@ -1262,26 +1289,32 @@ struct ContentView: View {
 
     private func applyImport(_ preview: ImportPreview) {
         var importedCount = 0
+        var insertedRecords: [VisitorRecord] = []
 
         for row in preview.rows where !row.isDuplicate {
-            modelContext.insert(
-                VisitorRecord(
-                    id: row.seed.id,
-                    firstName: row.seed.firstName,
-                    lastName: row.seed.lastName,
-                    company: row.seed.company,
-                    host: row.seed.host,
-                    carRegistration: row.seed.carRegistration,
-                    checkInAt: row.seed.checkInAt,
-                    checkedOutAt: row.seed.checkedOutAt,
-                    checkoutMethod: row.seed.checkoutMethod,
-                    createdAt: Date()
-                )
+            let record = VisitorRecord(
+                id: row.seed.id,
+                firstName: row.seed.firstName,
+                lastName: row.seed.lastName,
+                company: row.seed.company,
+                host: row.seed.host,
+                carRegistration: row.seed.carRegistration,
+                checkInAt: row.seed.checkInAt,
+                checkedOutAt: row.seed.checkedOutAt,
+                checkoutMethod: row.seed.checkoutMethod,
+                createdAt: Date()
             )
+            modelContext.insert(record)
+            insertedRecords.append(record)
             importedCount += 1
         }
 
-        saveContext()
+        guard saveContext() else {
+            for record in insertedRecords {
+                modelContext.delete(record)
+            }
+            return
+        }
         settingsMessage = "Import complete. Added \(importedCount), skipped duplicates \(preview.duplicateRows), parse failures \(preview.parseFailures.count)."
         showSettingsAlert = true
     }
@@ -1326,16 +1359,18 @@ struct ContentView: View {
         }
 
         if changed {
-            saveContext()
+            _ = saveContext()
         }
     }
 
-    private func saveContext() {
+    private func saveContext() -> Bool {
         do {
             try modelContext.save()
+            return true
         } catch {
             settingsMessage = "Failed to save records: \(error.localizedDescription)"
             showSettingsAlert = true
+            return false
         }
     }
 }
