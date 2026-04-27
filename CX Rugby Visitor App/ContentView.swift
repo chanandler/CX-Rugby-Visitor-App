@@ -325,7 +325,7 @@ struct ContentView: View {
                                     .foregroundStyle(cemexBlue)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .background(Color(red: 0.80, green: 0.84, blue: 0.90), in: Capsule())
+                                    .background(secondaryActionBackground, in: Capsule())
                             }
                             .buttonStyle(.plain)
                         }
@@ -338,11 +338,11 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                     }
                     .padding(22)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .background(registerCardBackground, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                     .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .stroke(Color.black.opacity(0.05), lineWidth: 1)
+                            .stroke(Color(uiColor: .separator).opacity(0.35), lineWidth: 1)
                     )
                     .padding(.horizontal, 32)
                     .offset(y: -40)
@@ -351,7 +351,7 @@ struct ContentView: View {
                 .padding(.bottom, -20)
             }
             .scrollIndicators(.hidden)
-            .background(Color(red: 0.92, green: 0.93, blue: 0.96).ignoresSafeArea())
+            .background(registerPageBackground.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .toolbar(.hidden, for: .tabBar)
         }
@@ -359,6 +359,22 @@ struct ContentView: View {
 
     private var cemexBlue: Color {
         Color(red: 0.03, green: 0.23, blue: 0.61)
+    }
+
+    private var registerPageBackground: Color {
+        Color(uiColor: .systemGroupedBackground)
+    }
+
+    private var registerCardBackground: Color {
+        Color(uiColor: .secondarySystemBackground)
+    }
+
+    private var registerFieldBackground: Color {
+        Color(uiColor: .tertiarySystemBackground)
+    }
+
+    private var secondaryActionBackground: Color {
+        Color(uiColor: .tertiarySystemFill)
     }
 
     @ViewBuilder
@@ -378,10 +394,10 @@ struct ContentView: View {
             CapitalizedUIKitTextField(placeholder: placeholder, text: text, normalization: normalization)
                 .frame(height: 44)
                 .padding(.horizontal, 12)
-                .background(Color(red: 0.95, green: 0.95, blue: 0.97), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background(registerFieldBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(error == nil ? Color.black.opacity(0.05) : .red.opacity(0.8), lineWidth: 1)
+                        .stroke(error == nil ? Color(uiColor: .separator).opacity(0.35) : .red.opacity(0.8), lineWidth: 1)
                 )
 
             if let error {
@@ -689,7 +705,7 @@ struct ContentView: View {
                 }
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .minimumScaleFactor(0.9)
-                .foregroundStyle(.black)
+                .foregroundStyle(Color(uiColor: .label))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.horizontal, 20)
@@ -700,7 +716,7 @@ struct ContentView: View {
             .overlay(alignment: .bottomTrailing) {
                 Text("\(thankYouCountdownSeconds)s")
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.black.opacity(0.8))
+                    .foregroundStyle(Color(uiColor: .secondaryLabel))
                     .padding(.trailing, 14)
                     .padding(.bottom, 10)
             }
@@ -717,10 +733,10 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "gearshape.fill")
                     .font(.title3)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(uiColor: .label))
                     .frame(width: 48, height: 48)
-                    .background(Color.black.opacity(0.65), in: Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.5), lineWidth: 1))
+                    .background(Color(uiColor: .secondarySystemBackground).opacity(0.92), in: Circle())
+                    .overlay(Circle().stroke(Color(uiColor: .separator), lineWidth: 1))
                     .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
             }
             .accessibilityLabel("Open Settings")
@@ -730,10 +746,10 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "flame.fill")
                     .font(.title3)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(uiColor: .label))
                     .frame(width: 48, height: 48)
-                    .background(Color.orange.opacity(0.9), in: Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.65), lineWidth: 1))
+                    .background(Color.orange.opacity(0.75), in: Circle())
+                    .overlay(Circle().stroke(Color(uiColor: .separator), lineWidth: 1))
                     .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
             }
             .accessibilityLabel("Open Fire Roll Call")

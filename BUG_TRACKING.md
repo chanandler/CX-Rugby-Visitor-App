@@ -13,21 +13,10 @@ Track confirmed issues here.
 ### BUG-011 (Priority: P1)
 - Status: ✅ Resolved
 - Title: User-facing success flows proceed even when `modelContext.save()` fails
-- Evidence:
-  - `saveContext()` catches errors internally and does not return failure state (`ContentView.swift:1333`).
-  - `registerVisitor()` always continues to clear fields and show success copy after `saveContext()` (`ContentView.swift:1116`).
-  - `applyImport()` always reports “Import complete” after `saveContext()` (`ContentView.swift:1284`).
-- Impact: Data may not be persisted, but operators receive success confirmation and can lose traceability/compliance records.
-- Recommended fix: Make `saveContext` throw (or return `Bool`) and gate all success UI/cleanup paths on successful persistence only.
 
 ### BUG-012 (Priority: P3)
 - Status: ✅ Resolved
 - Title: PIN setup error message can persist across later setup sessions after policy state changes
-- Evidence:
-  - Policy re-evaluation can force setup and set `pinSetupErrorMessage` (`ContentView.swift:1057`).
-  - When policy returns to valid state, `evaluatePinPolicy()` does not clear `pinSetupErrorMessage` (`ContentView.swift:1064`).
-- Impact: Users can see stale/incorrect validation messaging when opening PIN setup later, reducing trust in the flow.
-- Recommended fix: Clear `pinSetupErrorMessage` when entering a non-mandatory policy state and on sheet presentation for fresh sessions.
 
 ### BUG-009 (Priority: P2)
 - Status: ✅ Resolved
