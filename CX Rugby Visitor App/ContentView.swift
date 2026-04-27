@@ -1454,6 +1454,24 @@ private struct PinSetupSheet: View {
     let canCancel: Bool
     let onCancel: () -> Void
     let onSave: () -> Void
+    @FocusState private var focusedField: PinSetupField?
+
+    private enum PinSetupField {
+        case newPin
+        case confirmPin
+    }
+
+    private var sanitizedPinInput: String {
+        pinInput.filter(\.isNumber)
+    }
+
+    private var sanitizedConfirmPinInput: String {
+        confirmPinInput.filter(\.isNumber)
+    }
+
+    private var canSave: Bool {
+        (4...8).contains(sanitizedPinInput.count) && (4...8).contains(sanitizedConfirmPinInput.count)
+    }
 
     var body: some View {
         NavigationStack {
@@ -1462,11 +1480,32 @@ private struct PinSetupSheet: View {
                     Text("Set a 4 to 8 digit PIN to protect Sign In Book, Fire Roll Call, and Settings.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    Text("Avoid common PINs like 1234, 0000, 1111, or 9999.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
                     SecureField("New PIN", text: $pinInput)
                         .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .focused($focusedField, equals: .newPin)
+                        .onChange(of: pinInput) { _, newValue in
+                            let digitsOnly = newValue.filter(\.isNumber)
+                            let truncated = String(digitsOnly.prefix(8))
+                            if truncated != newValue {
+                                pinInput = truncated
+                            }
+                        }
                     SecureField("Confirm PIN", text: $confirmPinInput)
                         .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .focused($focusedField, equals: .confirmPin)
+                        .onChange(of: confirmPinInput) { _, newValue in
+                            let digitsOnly = newValue.filter(\.isNumber)
+                            let truncated = String(digitsOnly.prefix(8))
+                            if truncated != newValue {
+                                confirmPinInput = truncated
+                            }
+                        }
 
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
@@ -1476,6 +1515,11 @@ private struct PinSetupSheet: View {
                 }
             }
             .navigationTitle("PIN Setup")
+            .onAppear {
+                DispatchQueue.main.async {
+                    focusedField = .newPin
+                }
+            }
             .toolbar {
                 if canCancel {
                     ToolbarItem(placement: .cancellationAction) {
@@ -1484,7 +1528,7 @@ private struct PinSetupSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: onSave)
-                        .disabled(pinInput.isEmpty || confirmPinInput.isEmpty)
+                        .disabled(!canSave)
                 }
             }
         }
