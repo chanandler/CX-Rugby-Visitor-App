@@ -382,12 +382,15 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    Button("Back to Register <-") {
+                    Button {
                         selectedTab = .register
+                    } label: {
+                        Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
+                            .font(.headline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                    .font(.headline)
-                    .foregroundStyle(cemexBlue)
+                    .buttonStyle(.borderedProminent)
+                    .tint(cemexBlue)
                 }
 
                 Section("Search Active Visitors") {
@@ -429,12 +432,15 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    Button("Back to Register <-") {
+                    Button {
                         selectedTab = .register
+                    } label: {
+                        Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
+                            .font(.headline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                    .font(.headline)
-                    .foregroundStyle(cemexBlue)
+                    .buttonStyle(.borderedProminent)
+                    .tint(cemexBlue)
                 }
 
                 Section {
@@ -509,12 +515,15 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section {
-                    Button("Back to Register <-") {
+                    Button {
                         selectedTab = .register
+                    } label: {
+                        Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
+                            .font(.headline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                    .font(.headline)
-                    .foregroundStyle(cemexBlue)
+                    .buttonStyle(.borderedProminent)
+                    .tint(cemexBlue)
                 }
 
                 Section {
