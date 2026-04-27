@@ -360,7 +360,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(isRequired ? "\(title) *" : title)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(uiColor: .label))
 
             CapitalizedUIKitTextField(placeholder: placeholder, text: text, normalization: normalization)
                 .frame(height: 44)
@@ -2312,12 +2312,17 @@ struct CapitalizedUIKitTextField: UIViewRepresentable {
         textField.delegate = context.coordinator
         textField.borderStyle = .none
         textField.placeholder = placeholder
+        textField.textColor = .label
         textField.autocapitalizationType = normalization.autocapitalizationType
         textField.autocorrectionType = .yes
         textField.spellCheckingType = .yes
         textField.keyboardType = .default
         textField.returnKeyType = .done
         textField.clearButtonMode = .whileEditing
+        textField.attributedPlaceholder = NSAttributedString(
+            string: placeholder,
+            attributes: [.foregroundColor: UIColor.secondaryLabel]
+        )
         textField.addTarget(context.coordinator, action: #selector(Coordinator.textDidChange(_:)), for: .editingChanged)
         return textField
     }
@@ -2329,6 +2334,11 @@ struct CapitalizedUIKitTextField: UIViewRepresentable {
         if uiView.placeholder != placeholder {
             uiView.placeholder = placeholder
         }
+        uiView.textColor = .label
+        uiView.attributedPlaceholder = NSAttributedString(
+            string: placeholder,
+            attributes: [.foregroundColor: UIColor.secondaryLabel]
+        )
     }
 
     func makeCoordinator() -> Coordinator {
