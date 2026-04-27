@@ -24,14 +24,17 @@ struct ContentView: View {
     @State private var showPinEntrySheet = false
     @State private var showPinSetupSheet = false
     @State private var showSettingsSheet = false
+    @State private var showAdminResetConfirmation = false
     @State private var newPinInput = ""
     @State private var setupPinInput = ""
     @State private var confirmSetupPinInput = ""
     @State private var pinSetupErrorMessage = ""
+    @State private var requiresMandatoryPinChange = false
     @State private var lastUserActivityAt = Date()
     @State private var backgroundEnteredAt: Date?
 
     private let autoRelockInterval: TimeInterval = 5 * 60
+    private let disallowedDefaultPins: Set<String> = ["0000", "1111", "1234", "9999"]
 
     @State private var firstName = ""
     @State private var lastName = ""
@@ -78,9 +81,7 @@ struct ContentView: View {
         .onAppear {
             markUserActivity()
             runMaintenance()
-            if storedPin == nil {
-                showPinSetupSheet = true
-            }
+            evaluatePinPolicy()
         }
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
@@ -122,6 +123,14 @@ struct ContentView: View {
         } message: {
             Text(settingsMessage)
         }
+        .alert("Admin Reset PIN?", isPresented: $showAdminResetConfirmation) {
+            Button("Reset PIN", role: .destructive) {
+                performAdminPinReset()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This clears the current PIN and lockout state, then requires a new PIN setup before protected areas can be accessed.")
+        }
         .alert("Fire Roll Call", isPresented: $showRollCallAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -147,7 +156,7 @@ struct ContentView: View {
                 pinInput: $setupPinInput,
                 confirmPinInput: $confirmSetupPinInput,
                 errorMessage: pinSetupErrorMessage,
-                canCancel: storedPin != nil,
+                canCancel: storedPin != nil && !requiresMandatoryPinChange,
                 onCancel: {
                     setupPinInput = ""
                     confirmSetupPinInput = ""
@@ -607,6 +616,10 @@ struct ContentView: View {
                         updatePin()
                     }
 
+                    Button("Admin Reset PIN", role: .destructive) {
+                        showAdminResetConfirmation = true
+                    }
+
                     Button("Lock Protected Areas Now") {
                         relockProtectedAreas()
                     }
@@ -941,10 +954,16 @@ struct ContentView: View {
             showSettingsAlert = true
             return
         }
+        guard !disallowedDefaultPins.contains(digitsOnly) else {
+            settingsMessage = "Choose a PIN that is not a known default pattern."
+            showSettingsAlert = true
+            return
+        }
 
         do {
             try PinSecurityService.savePIN(digitsOnly)
             storedPin = digitsOnly
+            requiresMandatoryPinChange = false
             resetPinFailureState()
             newPinInput = ""
             settingsMessage = "PIN updated successfully."
@@ -961,7 +980,7 @@ struct ContentView: View {
     }
 
     private func ensurePinConfigured() -> Bool {
-        if storedPin == nil {
+        if storedPin == nil || requiresMandatoryPinChange {
             showPinSetupSheet = true
             return false
         }
@@ -976,6 +995,10 @@ struct ContentView: View {
             pinSetupErrorMessage = "PIN must be 4 to 8 digits."
             return
         }
+        guard !disallowedDefaultPins.contains(pin) else {
+            pinSetupErrorMessage = "Choose a PIN that is not a known default pattern."
+            return
+        }
         guard pin == confirm else {
             pinSetupErrorMessage = "PIN values do not match."
             return
@@ -984,6 +1007,7 @@ struct ContentView: View {
         do {
             try PinSecurityService.savePIN(pin)
             storedPin = pin
+            requiresMandatoryPinChange = false
             resetPinFailureState()
             setupPinInput = ""
             confirmSetupPinInput = ""
@@ -1021,6 +1045,43 @@ struct ContentView: View {
     private func resetPinFailureState() {
         pinFailureCount = 0
         pinLockoutUntilEpoch = 0
+    }
+
+    private func evaluatePinPolicy() {
+        if storedPin == nil {
+            requiresMandatoryPinChange = true
+            showPinSetupSheet = true
+            return
+        }
+
+        if let storedPin, disallowedDefaultPins.contains(storedPin) {
+            requiresMandatoryPinChange = true
+            pinSetupErrorMessage = "For security, default PINs must be changed before continuing."
+            showPinSetupSheet = true
+            return
+        }
+
+        requiresMandatoryPinChange = false
+    }
+
+    private func performAdminPinReset() {
+        do {
+            try PinSecurityService.deletePIN()
+            storedPin = nil
+            newPinInput = ""
+            setupPinInput = ""
+            confirmSetupPinInput = ""
+            pinInput = ""
+            pinErrorMessage = ""
+            resetPinFailureState()
+            relockProtectedAreas()
+            requiresMandatoryPinChange = true
+            pinSetupErrorMessage = "PIN was reset by admin. Set a new PIN to continue."
+            showPinSetupSheet = true
+        } catch {
+            settingsMessage = "Could not reset PIN: \(error.localizedDescription)"
+            showSettingsAlert = true
+        }
     }
 
     private func visitor(with id: UUID?) -> VisitorRecord? {

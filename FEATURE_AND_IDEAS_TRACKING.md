@@ -55,7 +55,7 @@ Track delivered features, planned enhancements, and future ideas.
 - Title: Harden PIN security controls
 - Type: Security / Governance
 - Priority: High
-- Status: Proposed
+- Status: ✅ Completed
 - Summary: Store PIN in Keychain, force setup/change from default on first run, and add retry lockout/backoff with optional admin reset.
 - Value: Reduces unauthorized access risk for protected operational screens.
 

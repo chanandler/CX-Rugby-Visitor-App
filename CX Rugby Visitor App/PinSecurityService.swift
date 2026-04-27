@@ -72,4 +72,17 @@ enum PinSecurityService {
             throw PinSecurityServiceError.unexpectedStatus(addStatus)
         }
     }
+
+    static func deletePIN() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw PinSecurityServiceError.unexpectedStatus(status)
+        }
+    }
 }
