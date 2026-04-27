@@ -1329,6 +1329,7 @@ private struct PinEntrySheet: View {
     let isUnlockDisabled: Bool
     let onCancel: () -> Void
     let onUnlock: () -> Void
+    @FocusState private var isPinFieldFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -1340,6 +1341,15 @@ private struct PinEntrySheet: View {
 
                     SecureField("PIN", text: $pinInput)
                         .keyboardType(.numberPad)
+                        .textContentType(.oneTimeCode)
+                        .focused($isPinFieldFocused)
+                        .onChange(of: pinInput) { _, newValue in
+                            let digitsOnly = newValue.filter(\.isNumber)
+                            let truncated = String(digitsOnly.prefix(8))
+                            if truncated != newValue {
+                                pinInput = truncated
+                            }
+                        }
 
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
@@ -1349,6 +1359,11 @@ private struct PinEntrySheet: View {
                 }
             }
             .navigationTitle("PIN Required")
+            .onAppear {
+                DispatchQueue.main.async {
+                    isPinFieldFocused = true
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: onCancel)
