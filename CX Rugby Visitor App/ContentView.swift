@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var storedPin: String? = PinSecurityService.loadPIN()
     @State private var pinInput = ""
     @State private var pinErrorMessage = ""
+    @State private var pinEntryShakeTrigger = 0
     @State private var showPinEntrySheet = false
     @State private var showPinSetupSheet = false
     @State private var showSettingsSheet = false
@@ -146,6 +147,9 @@ struct ContentView: View {
                 pinInput: $pinInput,
                 errorMessage: pinErrorMessage,
                 isUnlockDisabled: lockoutRemainingSeconds != nil,
+                shakeTrigger: pinEntryShakeTrigger,
+                attemptsBeforeInitialLockout: max(0, 5 - pinFailureCount),
+                lockoutUntilEpoch: pinLockoutUntilEpoch,
                 onCancel: {
                     pendingProtectedArea = nil
                     pinInput = ""
@@ -922,6 +926,7 @@ struct ContentView: View {
 
         if let remaining = lockoutRemainingSeconds {
             pinErrorMessage = "Too many attempts. Try again in \(remaining) seconds."
+            triggerPinEntryShake()
             return
         }
 
@@ -951,6 +956,7 @@ struct ContentView: View {
         pendingProtectedArea = nil
         pinInput = ""
         pinErrorMessage = ""
+        pinEntryShakeTrigger = 0
         showPinEntrySheet = false
         showSettingsSheet = false
         if selectedTab.isProtected {
@@ -968,6 +974,7 @@ struct ContentView: View {
         pendingProtectedArea = .settings
         pinInput = ""
         pinErrorMessage = ""
+        pinEntryShakeTrigger = 0
         showPinEntrySheet = true
     }
 
@@ -1054,17 +1061,9 @@ struct ContentView: View {
 
     private func registerFailedPinAttempt() {
         pinFailureCount += 1
+        triggerPinEntryShake()
 
-        let lockoutDuration: TimeInterval?
-        if pinFailureCount >= 10 {
-            lockoutDuration = 15 * 60
-        } else if pinFailureCount >= 7 {
-            lockoutDuration = 5 * 60
-        } else if pinFailureCount >= 5 {
-            lockoutDuration = 60
-        } else {
-            lockoutDuration = nil
-        }
+        let lockoutDuration: TimeInterval? = pinFailureCount >= 5 ? 60 : nil
 
         if let lockoutDuration {
             pinLockoutUntilEpoch = Date().addingTimeInterval(lockoutDuration).timeIntervalSince1970
@@ -1077,6 +1076,12 @@ struct ContentView: View {
     private func resetPinFailureState() {
         pinFailureCount = 0
         pinLockoutUntilEpoch = 0
+    }
+
+    private func triggerPinEntryShake() {
+        withAnimation(.easeInOut(duration: 0.35)) {
+            pinEntryShakeTrigger += 1
+        }
     }
 
     private func evaluatePinPolicy() {
@@ -1106,6 +1111,7 @@ struct ContentView: View {
             confirmSetupPinInput = ""
             pinInput = ""
             pinErrorMessage = ""
+            pinEntryShakeTrigger = 0
             resetPinFailureState()
             relockProtectedAreas()
             requiresMandatoryPinChange = true
@@ -1481,10 +1487,12 @@ private struct PinEntrySheet: View {
     @Binding var pinInput: String
     let errorMessage: String
     let isUnlockDisabled: Bool
+    let shakeTrigger: Int
+    let attemptsBeforeInitialLockout: Int
+    let lockoutUntilEpoch: Double
     let onCancel: () -> Void
     let onUnlock: () -> Void
     @FocusState private var isPinFieldFocused: Bool
-    @State private var shakeAttempts = 0
 
     var body: some View {
         NavigationStack {
@@ -1498,7 +1506,6 @@ private struct PinEntrySheet: View {
                         .keyboardType(.numberPad)
                         .textContentType(.oneTimeCode)
                         .focused($isPinFieldFocused)
-                        .modifier(ShakeEffect(animatableData: CGFloat(shakeAttempts)))
                         .onChange(of: pinInput) { _, newValue in
                             let digitsOnly = newValue.filter(\.isNumber)
                             let truncated = String(digitsOnly.prefix(8))
@@ -1507,6 +1514,19 @@ private struct PinEntrySheet: View {
                             }
                         }
 
+                    if lockoutUntilEpoch > Date().timeIntervalSince1970 {
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            let secondsRemaining = max(0, Int(ceil(lockoutUntilEpoch - context.date.timeIntervalSince1970)))
+                            Text("Lockout active: \(secondsRemaining)s remaining")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                    } else {
+                        Text("Attempts left before lockout: \(attemptsBeforeInitialLockout)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
                             .font(.caption)
@@ -1514,13 +1534,8 @@ private struct PinEntrySheet: View {
                     }
                 }
             }
+            .modifier(ShakeEffect(animatableData: CGFloat(shakeTrigger)))
             .navigationTitle("PIN Required")
-            .onChange(of: errorMessage) { _, newValue in
-                guard !newValue.isEmpty else { return }
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    shakeAttempts += 1
-                }
-            }
             .onAppear {
                 DispatchQueue.main.async {
                     isPinFieldFocused = true

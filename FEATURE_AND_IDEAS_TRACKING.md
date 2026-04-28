@@ -15,7 +15,7 @@ Track delivered features, planned enhancements, and future ideas.
 - CSV import/restore with preview, duplicate skipping, parse-failure reporting, and safe defaults.
 - About/settings with version/build display and operational toggles.
 - Analytics dashboard in Settings with charted visitor trends and period switching (day/week/month/year).
-
+the 
 
 ## New Ideas Backlog
 
