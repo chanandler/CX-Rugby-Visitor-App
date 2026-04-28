@@ -602,15 +602,24 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(rollCallConfirmedOutVisitors, id: \.id) { visitor in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(visitor.fullName)
-                                    .font(.headline)
-                                Text("\(visitor.company) • Host: \(visitor.host)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("Confirmed out at \(visitor.checkedOutAt?.formatted(date: .omitted, time: .shortened) ?? "-")")
-                                    .font(.caption)
-                                    .foregroundStyle(.green)
+                            HStack(alignment: .center, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(visitor.fullName)
+                                        .font(.headline)
+                                    Text("\(visitor.company) • Host: \(visitor.host)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text("Confirmed out at \(visitor.checkedOutAt?.formatted(date: .omitted, time: .shortened) ?? "-")")
+                                        .font(.caption)
+                                        .foregroundStyle(.green)
+                                }
+
+                                Spacer()
+
+                                Button("Sign Back In") {
+                                    signBackInFromRollCall(visitor)
+                                }
+                                .buttonStyle(.bordered)
                             }
                             .padding(.vertical, 2)
                         }
@@ -1245,6 +1254,22 @@ struct ContentView: View {
         }
         rollCallMessage = "Confirmed out \(visitorsToCheckout.count) visitor(s)."
         showRollCallAlert = true
+    }
+
+    private func signBackInFromRollCall(_ visitor: VisitorRecord) {
+        guard !visitor.isActive else { return }
+
+        let originalCheckedOutAt = visitor.checkedOutAt
+        let originalCheckoutMethod = visitor.checkoutMethod
+
+        visitor.checkedOutAt = nil
+        visitor.checkoutMethod = ""
+
+        guard saveContext() else {
+            visitor.checkedOutAt = originalCheckedOutAt
+            visitor.checkoutMethod = originalCheckoutMethod
+            return
+        }
     }
 
     private func exportCSV() {
