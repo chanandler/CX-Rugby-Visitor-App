@@ -1484,6 +1484,7 @@ private struct PinEntrySheet: View {
     let onCancel: () -> Void
     let onUnlock: () -> Void
     @FocusState private var isPinFieldFocused: Bool
+    @State private var shakeAttempts = 0
 
     var body: some View {
         NavigationStack {
@@ -1497,6 +1498,7 @@ private struct PinEntrySheet: View {
                         .keyboardType(.numberPad)
                         .textContentType(.oneTimeCode)
                         .focused($isPinFieldFocused)
+                        .modifier(ShakeEffect(animatableData: CGFloat(shakeAttempts)))
                         .onChange(of: pinInput) { _, newValue in
                             let digitsOnly = newValue.filter(\.isNumber)
                             let truncated = String(digitsOnly.prefix(8))
@@ -1513,6 +1515,12 @@ private struct PinEntrySheet: View {
                 }
             }
             .navigationTitle("PIN Required")
+            .onChange(of: errorMessage) { _, newValue in
+                guard !newValue.isEmpty else { return }
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    shakeAttempts += 1
+                }
+            }
             .onAppear {
                 DispatchQueue.main.async {
                     isPinFieldFocused = true
@@ -1539,6 +1547,7 @@ private struct PinSetupSheet: View {
     let onCancel: () -> Void
     let onSave: () -> Void
     @FocusState private var focusedField: PinSetupField?
+    @State private var shakeAttempts = 0
 
     private enum PinSetupField {
         case newPin
@@ -1584,6 +1593,7 @@ private struct PinSetupSheet: View {
                         .keyboardType(.numberPad)
                         .textContentType(.oneTimeCode)
                         .focused($focusedField, equals: .newPin)
+                        .modifier(ShakeEffect(animatableData: CGFloat(shakeAttempts)))
                         .onChange(of: pinInput) { _, newValue in
                             let digitsOnly = newValue.filter(\.isNumber)
                             let truncated = String(digitsOnly.prefix(8))
@@ -1617,6 +1627,12 @@ private struct PinSetupSheet: View {
                 }
             }
             .navigationTitle("PIN Setup")
+            .onChange(of: errorMessage) { _, newValue in
+                guard !newValue.isEmpty else { return }
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    shakeAttempts += 1
+                }
+            }
             .onAppear {
                 DispatchQueue.main.async {
                     focusedField = .newPin
@@ -1634,6 +1650,17 @@ private struct PinSetupSheet: View {
                 }
             }
         }
+    }
+}
+
+private struct ShakeEffect: GeometryEffect {
+    var amount: CGFloat = 8
+    var shakesPerUnit: CGFloat = 4
+    var animatableData: CGFloat
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let translationX = amount * sin(animatableData * .pi * shakesPerUnit)
+        return ProjectionTransform(CGAffineTransform(translationX: translationX, y: 0))
     }
 }
 
