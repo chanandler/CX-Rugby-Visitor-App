@@ -421,7 +421,7 @@ struct ContentView: View {
                         Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
+                            .padding(.vertical, 16)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(cemexBlue)
@@ -472,30 +472,43 @@ struct ContentView: View {
                         Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(cemexBlue)
                 }
 
                 Section {
-                    HStack(spacing: 8) {
-                        ForEach(SignInScope.allCases, id: \.self) { scope in
-                            Button(scope.rawValue) {
-                                signInScope = scope
+                    HStack(spacing: 10) {
+                        ForEach(SignInScope.allCases) { scope in
+                            if signInScope == scope {
+                                Button {
+                                    signInScope = scope
+                                } label: {
+                                    Text(scope.rawValue)
+                                        .font(.headline.weight(.semibold))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 16)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.accentColor)
+                            } else {
+                                Button {
+                                    signInScope = scope
+                                } label: {
+                                    Text(scope.rawValue)
+                                        .font(.headline.weight(.semibold))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 16)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(.gray)
                             }
-                            .buttonStyle(.plain)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(signInScope == scope ? .white : .primary)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 48)
-                            .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(signInScope == scope ? Color.accentColor : Color.gray.opacity(0.15))
-                            )
-                            .contentShape(Rectangle())
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.clear)
                 }
 
                 Section("Records") {
@@ -557,6 +570,7 @@ struct ContentView: View {
                         Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(cemexBlue)
