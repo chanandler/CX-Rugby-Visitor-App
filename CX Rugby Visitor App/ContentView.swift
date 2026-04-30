@@ -437,21 +437,28 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredLeavingVisitors, id: \.id) { visitor in
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(visitor.fullName)
-                                    .font(.headline)
-                                Text("\(visitor.company) • Host: \(visitor.host)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Text("Checked in: \(visitor.checkInAt.formatted(date: .abbreviated, time: .shortened))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            HStack(alignment: .center, spacing: 14) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(visitor.fullName)
+                                        .font(.headline)
+                                    Text("\(visitor.company) • Host: \(visitor.host)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    Text("Checked in: \(visitor.checkInAt.formatted(date: .abbreviated, time: .shortened))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
 
                                 Button("Check Out") {
                                     checkoutCandidateID = visitor.id
                                     showCheckoutConfirmation = true
                                 }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(.borderedProminent)
+                                .tint(cemexBlue)
+                                .font(.headline.weight(.semibold))
+                                .padding(.vertical, 16)
                             }
                             .padding(.vertical, 4)
                         }
