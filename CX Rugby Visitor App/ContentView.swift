@@ -421,6 +421,7 @@ struct ContentView: View {
                         Label("Back to Register <-", systemImage: "arrow.left.circle.fill")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(cemexBlue)
@@ -486,11 +487,13 @@ struct ContentView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(signInScope == scope ? .white : .primary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .frame(minHeight: 48)
+                            .padding(.vertical, 14)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
                                     .fill(signInScope == scope ? Color.accentColor : Color.gray.opacity(0.15))
                             )
+                            .contentShape(Rectangle())
                         }
                     }
                 }
